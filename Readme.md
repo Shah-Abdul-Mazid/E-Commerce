@@ -1,4 +1,4 @@
-# ⚡ EZOpy MART TECH — Premium AI Tools & B.Sc. CSE Academic Curriculum Hub
+# ⚡ EZOPY MART TECH — Premium AI Tools & B.Sc. CSE Academic Curriculum Hub
 
 > *Dedicated with warmth to Jannat Farhana Popy • Curated by Shah Abdul Mazid*
 
