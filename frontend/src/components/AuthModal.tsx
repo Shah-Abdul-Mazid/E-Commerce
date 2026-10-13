@@ -19,7 +19,8 @@ interface Props {
   onClose: () => void
 }
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
 
 export const AuthModal: React.FC<Props> = ({ onSuccess, onClose }) => {
   const [isRegister, setIsRegister] = useState(false)

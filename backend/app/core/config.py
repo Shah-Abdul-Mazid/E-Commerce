@@ -12,9 +12,13 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # Database URL: Supports PostgreSQL (asyncpg) or SQLite (aiosqlite) as default fallback
-    _raw_db_url: str = os.getenv(
-        "DATABASE_URL", "sqlite+aiosqlite:///./samjap_mart.db"
+    # On Vercel serverless functions, /var/task is read-only so default SQLite uses /tmp
+    _default_sqlite_url: str = (
+        "sqlite+aiosqlite:////tmp/samjap_mart.db"
+        if os.getenv("VERCEL")
+        else "sqlite+aiosqlite:///./samjap_mart.db"
     )
+    _raw_db_url: str = os.getenv("DATABASE_URL", _default_sqlite_url)
     if _raw_db_url.startswith("postgres://"):
         DATABASE_URL: str = _raw_db_url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif _raw_db_url.startswith("postgresql://") and not _raw_db_url.startswith("postgresql+asyncpg://"):

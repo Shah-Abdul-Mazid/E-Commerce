@@ -206,22 +206,35 @@ async def seed_initial_data():
 
         await db.commit()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Initialize SQLite or Postgres tables
+_db_initialized = False
+
+async def ensure_db_initialized():
+    global _db_initialized
+    if _db_initialized:
+        return
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    # Seed data
     await seed_initial_data()
+    _db_initialized = True
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await ensure_db_initialized()
     yield
     await engine.dispose()
 
 app = FastAPI(
-    title="SoftMart IT - API",
-    description="Backend API for SoftMart IT Tools Marketplace & DBBL NexusPay Memo Engine",
+    title="EZOPY MART TECH - API",
+    description="Backend API for EZOPY MART TECH Tools Marketplace & DBBL NexusPay Memo Engine",
     version="2.0.0",
     lifespan=lifespan
 )
+
+@app.middleware("http")
+async def db_init_middleware(request, call_next):
+    if not _db_initialized:
+        await ensure_db_initialized()
+    return await call_next(request)
 
 # CORS
 app.add_middleware(

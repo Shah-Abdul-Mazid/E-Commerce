@@ -10,7 +10,8 @@ interface Props {
   onRequireLogin: () => void
 }
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
 
 export const CheckoutModal: React.FC<Props> = ({
   product,
