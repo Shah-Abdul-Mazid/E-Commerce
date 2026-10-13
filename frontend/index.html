@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SAMJAP MART • CSE & AI Hub</title>    <!-- Tailwind CSS with romantic & luxury colors config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              canvas: '#0d0b18',
+              surface: '#16122b',
+              surfaceLight: '#211b3d',
+              brandRose: '#f43f5e',
+              brandPurple: '#a855f7',
+              brandGold: '#fbbf24',
+              dbblNavy: '#0f2942',
+              dbblRed: '#e51a24',
+              dbblGreen: '#008738',
+              dbblBlue: '#0066b2',
+            },
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+              mono: ['Courier New', 'Courier', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #0d0b18;
+      }
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #printable-memo, #printable-memo * {
+          visibility: visible;
+        }
+        #printable-memo {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-[#f8fafc] text-slate-900 min-h-screen selection:bg-emerald-600 selection:text-white antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

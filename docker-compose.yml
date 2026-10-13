@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DATABASE_URL=sqlite+aiosqlite:///./samjap_mart.db
+      - APP_BASE_URL=http://localhost:8000
+      - FRONTEND_URL=http://localhost:5174
+      - SSL_STORE_ID=jfpet6acc0a12e3919
+      - SSL_STORE_PASSWORD=jfpet6acc0a12e3919@ssl
+      - SSL_IS_LIVE=false
+    volumes:
+      - backend_data:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_BACKEND_URL=http://localhost:8000
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
