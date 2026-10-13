@@ -229,11 +229,19 @@ export const NexusPayMemoModal: React.FC<Props> = ({ memo, transaction, onClose 
           </div>
         </div>
 
-        {/* Modal Bottom Close */}
-        <div className="p-3 bg-slate-900 border-t border-slate-800 text-center">
-          <p className="text-xs text-slate-400">
-            Keep this slip as official proof of payment for your SoftMart IT account.
+        {/* Modal Bottom Actions */}
+        <div className="p-3 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-[11px] text-slate-400">
+            Keep this slip as official proof of payment for your SAMJAP Mart account.
           </p>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/30 cursor-pointer whitespace-nowrap"
+            >
+              View in My Active Tools ➔
+            </button>
+          )}
         </div>
       </div>
     </div>

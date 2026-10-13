@@ -14,33 +14,77 @@ from app.api.v1.checkout import router as checkout_router
 from app.api.v1.memos import router as memos_router
 
 async def seed_initial_data():
-    """Seed default admin user and subscription products/tools"""
+    """Seed default admins, demo customers, and subscription products/tools"""
     async with AsyncSessionLocal() as db:
-        # 1. Admin Seed - Shah Abdul Mazid
-        admin_res = await db.execute(select(User).where(User.email == "mazid@samjap.mart"))
-        if not admin_res.scalar_one_or_none():
-            admin_user = User(
-                email="mazid@samjap.mart",
-                full_name="Shah Abdul Mazid",
-                phone_number="01711009988",
-                hashed_password=get_password_hash("MazidLovesPopy2026"),
-                role=UserRole.ADMIN,
-                is_active=True
-            )
-            db.add(admin_user)
+        # 1. Accounts to seed/update (admins & demo customers) with secure bcrypt hashed passwords
+        accounts_to_seed = [
+            # Admins
+            {
+                "email": "admin@samjap.mart",
+                "full_name": "System Administrator",
+                "phone_number": "01700000001",
+                "password": "Admin@123",
+                "role": UserRole.ADMIN,
+            },
+            {
+                "email": "mazid@samjap.mart",
+                "full_name": "Shah Abdul Mazid",
+                "phone_number": "01711009988",
+                "password": "Mazid@123",
+                "role": UserRole.ADMIN,
+            },
+            {
+                "email": "popy@samjap.mart",
+                "full_name": "Jannat Farhana Popy ❤️",
+                "phone_number": "01844998877",
+                "password": "Popy@123",
+                "role": UserRole.ADMIN,
+            },
+            # Demo Customers
+            {
+                "email": "customer1@gmail.com",
+                "full_name": "Demo Customer One",
+                "phone_number": "01711223344",
+                "password": "Customer@123",
+                "role": UserRole.CUSTOMER,
+            },
+            {
+                "email": "customer2@yahoo.com",
+                "full_name": "Demo Customer Two",
+                "phone_number": "01811223344",
+                "password": "Customer@123",
+                "role": UserRole.CUSTOMER,
+            },
+            {
+                "email": "customer3@outlook.com",
+                "full_name": "Demo Customer Three",
+                "phone_number": "01911223344",
+                "password": "Customer@123",
+                "role": UserRole.CUSTOMER,
+            },
+        ]
 
-        # 2. Romantic VIP Customer Seed - Jannat Farhana Popy
-        cust_res = await db.execute(select(User).where(User.email == "popy@samjap.mart"))
-        if not cust_res.scalar_one_or_none():
-            demo_cust = User(
-                email="popy@samjap.mart",
-                full_name="Jannat Farhana Popy ❤️",
-                phone_number="01844998877",
-                hashed_password=get_password_hash("PopyLovesMazid123"),
-                role=UserRole.CUSTOMER,
-                is_active=True
-            )
-            db.add(demo_cust)
+        for acc in accounts_to_seed:
+            res = await db.execute(select(User).where(User.email == acc["email"].lower()))
+            existing_user = res.scalar_one_or_none()
+            if existing_user:
+                existing_user.full_name = acc["full_name"]
+                existing_user.role = acc["role"]
+                existing_user.phone_number = acc["phone_number"]
+                existing_user.hashed_password = get_password_hash(acc["password"])
+                existing_user.is_active = True
+            else:
+                new_user = User(
+                    email=acc["email"].lower(),
+                    full_name=acc["full_name"],
+                    phone_number=acc["phone_number"],
+                    hashed_password=get_password_hash(acc["password"]),
+                    role=acc["role"],
+                    is_active=True,
+                )
+                db.add(new_user)
+
+        await db.commit()
 
         # 3. Products & Packages Seed
         prod_count = await db.execute(select(Product))

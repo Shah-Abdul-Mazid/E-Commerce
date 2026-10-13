@@ -276,12 +276,12 @@ export const translations: Record<Language, Translations> = {
       generateBtn: 'Generate Official Memo',
     },
     footer: {
-      title: 'Shopcart • SAMJAP Mart & Academic Hub',
+      title: 'ezopy mart tech • Academic & AI Cloud Hub',
       dedication: 'Dedicated with affection to Jannat Farhana Popy by Shah Abdul Mazid • B.Sc. Computer Science & Engineering',
       address: 'Dhaka, Bangladesh',
       dbblAccount: 'DBBL A/C: 107.110.198425',
       support: 'Support: support@samjap.mart',
-      copyright: '© 2026 SAMJAP Mart. A Mazid & Popy Initiative. All rights reserved.',
+      copyright: '© 2026 ezopy mart tech. A Mazid & Popy Initiative. All rights reserved.',
     },
   },
 
@@ -410,12 +410,12 @@ export const translations: Record<Language, Translations> = {
       generateBtn: 'অফিসিয়াল মেমো তৈরি করুন',
     },
     footer: {
-      title: 'Shopcart • স্যামজাপ মার্ট ও অ্যাকাডেমিক হাব',
+      title: 'ezopy mart tech • অ্যাকাডেমিক ও এআই ক্লাউড হাব',
       dedication: 'জান্নাত ফারহানা পপি-র প্রতি সস্নেহ নিবেদনে শাহ আব্দুল মাজিদ • বি.এসসি. কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং',
       address: 'ঢাকা, বাংলাদেশ',
       dbblAccount: 'ডিবিবিএল হিসাব: 107.110.198425',
       support: 'সহায়তা: support@samjap.mart',
-      copyright: '© ২০২৬ SAMJAP Mart. মাজিদ ও পপি উদ্যোগ। সর্বস্বত্ব সংরক্ষিত।',
+      copyright: '© ২০২৬ ezopy mart tech. মাজিদ ও পপি উদ্যোগ। সর্বস্বত্ব সংরক্ষিত।',
     },
   },
 

@@ -25,6 +25,8 @@ import {
   Code,
   Award,
   Globe,
+  Sun,
+  Moon,
 } from 'lucide-react'
 
 import type { Product, Transaction, Subscription, User as UserType } from './types'
@@ -33,6 +35,15 @@ import { CheckoutModal } from './components/CheckoutModal'
 import { AuthModal } from './components/AuthModal'
 import { DashboardView } from './components/DashboardView'
 import { translations, LANGUAGES, type Language } from './translations'
+import ezopyLogo from './assets/ezopy.png'
+
+export type ThemeMode = 'light' | 'night' | 'auto'
+
+const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: typeof Sun; desc: string }[] = [
+  { mode: 'light', label: 'Light', icon: Sun, desc: 'Daylight clean theme' },
+  { mode: 'night', label: 'Night', icon: Moon, desc: 'Deep dark night theme' },
+  { mode: 'auto', label: 'Auto', icon: Laptop, desc: 'System settings appearance' },
+]
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 
@@ -977,6 +988,58 @@ export default function App() {
   })
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false)
 
+  // Theme State: 'night', 'light', 'auto' (system settings)
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('ezopy_theme') as ThemeMode | null
+    if (saved === 'light' || saved === 'night' || saved === 'auto') {
+      return saved
+    }
+    return 'auto'
+  })
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false)
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'night'>('light')
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const applyTheme = () => {
+      let isNight = false
+      if (themeMode === 'night') {
+        isNight = true
+      } else if (themeMode === 'light') {
+        isNight = false
+      } else {
+        // 'auto' matches device system settings
+        isNight = mediaQuery.matches
+      }
+
+      setEffectiveTheme(isNight ? 'night' : 'light')
+      if (isNight) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    }
+
+    applyTheme()
+    localStorage.setItem('ezopy_theme', themeMode)
+
+    const handleSystemChange = (e: MediaQueryListEvent) => {
+      if (themeMode === 'auto') {
+        const isNight = e.matches
+        setEffectiveTheme(isNight ? 'night' : 'light')
+        if (isNight) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      }
+    }
+
+    mediaQuery.addEventListener('change', handleSystemChange)
+    return () => mediaQuery.removeEventListener('change', handleSystemChange)
+  }, [themeMode])
+
   const t = translations[language] || translations.en
   const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0]
 
@@ -1002,6 +1065,7 @@ export default function App() {
 
   // Load backend products, token user, and check SSLCommerz return query params
   useEffect(() => {
+    document.title = 'EZOPY MART TECH'
     fetchProducts()
     if (token) {
       fetchCurrentUser(token)
@@ -1265,7 +1329,7 @@ export default function App() {
       memo: trx.memo,
       transaction: trx,
     })
-    setNotification('Order processed! Official NexusPay transaction memo created.')
+    setNotification(`Success! "${trx.product_title || 'Product'}" is now added to your Active Subscriptions!`)
     setTimeout(() => setNotification(null), 5000)
   }
 
@@ -1323,7 +1387,7 @@ export default function App() {
   return (
     <div
       dir={currentLangObj.dir}
-      className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans selection:bg-emerald-600 selection:text-white"
+      className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f17] text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-600 selection:text-white transition-colors duration-200"
     >
       {/* Toast Notification */}
       {notification && (
@@ -1367,11 +1431,90 @@ export default function App() {
             </span>
             <span className="hidden sm:inline text-emerald-300">{t.topBar.location}</span>
 
+            {/* Theme Mode Selector (Night, Light, Auto) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsThemeMenuOpen(!isThemeMenuOpen)
+                  setIsLangMenuOpen(false)
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-100 font-bold hover:text-white transition cursor-pointer shadow-xs active:scale-95"
+                title="Theme: Night, Light, Auto based on system settings"
+              >
+                {themeMode === 'light' && <Sun className="w-3.5 h-3.5 text-amber-300" />}
+                {themeMode === 'night' && <Moon className="w-3.5 h-3.5 text-sky-300" />}
+                {themeMode === 'auto' && <Laptop className="w-3.5 h-3.5 text-emerald-300" />}
+                <span className="text-[12px] font-bold capitalize">
+                  {themeMode === 'auto' ? `Auto (${effectiveTheme})` : themeMode}
+                </span>
+                <ChevronDown className={`w-3 h-3 text-emerald-300 transition-transform ${isThemeMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isThemeMenuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95"
+                  style={{ minWidth: '13rem' }}
+                >
+                  <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 flex items-center justify-between">
+                    <span>Appearance / থিম</span>
+                    <span className="text-[9px] lowercase font-normal text-emerald-600 dark:text-emerald-400">
+                      active: {effectiveTheme}
+                    </span>
+                  </div>
+                  <div className="py-1">
+                    {THEME_OPTIONS.map((opt) => {
+                      const IconComp = opt.icon
+                      const isSelected = themeMode === opt.mode
+                      return (
+                        <button
+                          key={opt.mode}
+                          type="button"
+                          onClick={() => {
+                            setThemeMode(opt.mode)
+                            setIsThemeMenuOpen(false)
+                          }}
+                          className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-slate-800 transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-emerald-50 dark:bg-slate-800 text-[#003d29] dark:text-emerald-400 font-black'
+                              : 'text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <span className={`p-1 rounded-lg ${isSelected ? 'bg-emerald-100 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
+                              <IconComp className="w-4 h-4" />
+                            </span>
+                            <span className="flex flex-col">
+                              <span className="font-bold flex items-center gap-1.5">
+                                {opt.label}
+                                {opt.mode === 'auto' && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">
+                                    System
+                                  </span>
+                                )}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                {opt.desc}
+                              </span>
+                            </span>
+                          </span>
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Language Switcher Dropdown */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                onClick={() => {
+                  setIsLangMenuOpen(!isLangMenuOpen)
+                  setIsThemeMenuOpen(false)
+                }}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-100 font-bold hover:text-white transition cursor-pointer shadow-xs active:scale-95"
                 title="Change language / ভাষা পরিবর্তন করুন"
               >
@@ -1382,10 +1525,10 @@ export default function App() {
 
               {isLangMenuOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-52 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95"
+                  className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95"
                   style={{ minWidth: '13rem' }}
                 >
-                  <div className="px-3 py-1.5 border-b border-slate-100 text-[10px] uppercase tracking-wider font-extrabold text-slate-400">
+                  <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500">
                     Select Language / ভাষা
                   </div>
                   <div className="max-h-64 overflow-y-auto py-1">
@@ -1394,18 +1537,18 @@ export default function App() {
                         key={l.code}
                         type="button"
                         onClick={() => handleLanguageChange(l.code)}
-                        className={`w-full px-3.5 py-2 text-left text-xs font-semibold flex items-center justify-between hover:bg-emerald-50 hover:text-[#003d29] transition cursor-pointer ${
-                          language === l.code ? 'bg-emerald-50 text-[#003d29] font-black' : 'text-slate-700'
+                        className={`w-full px-3.5 py-2 text-left text-xs font-semibold flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-slate-800 transition cursor-pointer ${
+                          language === l.code ? 'bg-emerald-50 dark:bg-slate-800 text-[#003d29] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-300'
                         }`}
                       >
                         <span className="flex items-center gap-2.5">
                           <span className="text-base leading-none">{l.flag}</span>
                           <span className="flex flex-col">
                             <span className="font-bold">{l.nativeName}</span>
-                            <span className="text-[10px] text-slate-400">{l.name}</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500">{l.name}</span>
                           </span>
                         </span>
-                        {language === l.code && <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+                        {language === l.code && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />}
                       </button>
                     ))}
                   </div>
@@ -1417,36 +1560,36 @@ export default function App() {
       </div>
 
       {/* 2. MAIN HEADER NAVIGATION */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0d131f]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 lg:gap-8">
           {/* Logo & Classy Tagline */}
           <div
             onClick={() => setActiveView('store')}
             className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
           >
-            <div className="w-11 h-11 rounded-2xl bg-[#003d29] text-white flex items-center justify-center font-black text-xl shadow-md group-hover:scale-105 transition-transform duration-200">
-              <GraduationCap className="w-6 h-6 text-amber-300" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700 shadow-md p-1.5 flex items-center justify-center group-hover:scale-105 transition-transform duration-200 overflow-hidden flex-shrink-0">
+              <img src={ezopyLogo} alt="EZOPY MART TECH" className="w-full h-full object-contain" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-tight text-slate-900">
-                  Shop<span className="text-[#003d29]">cart</span>
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center uppercase">
+                  EZOPY <span className="text-emerald-600 dark:text-emerald-400 ml-2 font-black">MART TECH</span>
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-[#003d29] px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/80 text-[#003d29] dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                   {t.nav.academicHub}
                 </span>
-                <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800">
                   {t.nav.specialEdition}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 font-medium">
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 {t.nav.dedication}
               </p>
             </div>
           </div>
 
           {/* Center Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-700">
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-700 dark:text-slate-300">
             <button
               onClick={() => {
                 setActiveView('store')
@@ -1454,11 +1597,11 @@ export default function App() {
               }}
               className={`flex items-center gap-1.5 transition ${
                 activeCategory === 'Education'
-                  ? 'text-[#003d29] font-black border-b-2 border-[#003d29] pb-0.5'
-                  : 'hover:text-[#003d29]'
+                  ? 'text-[#003d29] dark:text-emerald-400 font-black border-b-2 border-[#003d29] dark:border-emerald-400 pb-0.5'
+                  : 'hover:text-[#003d29] dark:hover:text-emerald-400'
               }`}
             >
-              <BookOpen className="w-4 h-4 text-emerald-700" />
+              <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>{t.nav.cseCourses}</span>
             </button>
             <button
@@ -1466,7 +1609,7 @@ export default function App() {
                 setActiveView('store')
                 setActiveCategory('AI Bundles')
               }}
-              className={`hover:text-[#003d29] transition ${activeCategory === 'AI Bundles' ? 'text-[#003d29] font-black border-b-2 border-[#003d29] pb-0.5' : ''}`}
+              className={`hover:text-[#003d29] dark:hover:text-emerald-400 transition ${activeCategory === 'AI Bundles' ? 'text-[#003d29] dark:text-emerald-400 font-black border-b-2 border-[#003d29] dark:border-emerald-400 pb-0.5' : ''}`}
             >
               {t.nav.aiBundles}
             </button>
@@ -1475,7 +1618,7 @@ export default function App() {
                 setActiveView('store')
                 setActiveCategory('Single Tools')
               }}
-              className={`hover:text-[#003d29] transition ${activeCategory === 'Single Tools' ? 'text-[#003d29] font-black border-b-2 border-[#003d29] pb-0.5' : ''}`}
+              className={`hover:text-[#003d29] dark:hover:text-emerald-400 transition ${activeCategory === 'Single Tools' ? 'text-[#003d29] dark:text-emerald-400 font-black border-b-2 border-[#003d29] dark:border-emerald-400 pb-0.5' : ''}`}
             >
               {t.nav.singleTools}
             </button>
@@ -1483,8 +1626,8 @@ export default function App() {
               onClick={() => setActiveView('memo-generator')}
               className={`flex items-center gap-1.5 transition ${
                 activeView === 'memo-generator'
-                  ? 'text-amber-800 font-bold'
-                  : 'text-amber-700 hover:text-amber-800'
+                  ? 'text-amber-800 dark:text-amber-300 font-bold'
+                  : 'text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300'
               }`}
             >
               <FileText className="w-4 h-4 text-amber-500" />
@@ -1493,7 +1636,7 @@ export default function App() {
             {user && (
               <button
                 onClick={() => setActiveView('dashboard')}
-                className={`transition ${activeView === 'dashboard' ? 'text-emerald-700 font-bold' : 'hover:text-emerald-700'}`}
+                className={`transition ${activeView === 'dashboard' ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'hover:text-emerald-700 dark:hover:text-emerald-400'}`}
               >
                 {t.nav.dashboard} {user.role === 'ADMIN' ? `⚡ ${t.nav.admin}` : ''}
               </button>
@@ -1508,26 +1651,46 @@ export default function App() {
                 placeholder={t.nav.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 border border-slate-200 rounded-full pl-4 pr-10 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#003d29]/20 focus:border-[#003d29] transition"
+                className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-900 dark:focus:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-full pl-4 pr-10 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition placeholder-slate-400 dark:placeholder-slate-500"
               />
               <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
             </div>
           </div>
 
-          {/* Right Action Icons: Account & Cart */}
-          <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
+          {/* Right Action Icons: Quick Theme Toggle, Account & Cart */}
+          <div className="flex items-center gap-2.5 sm:gap-4 flex-shrink-0">
+            {/* Quick 1-Click Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextMode: ThemeMode = themeMode === 'light' ? 'night' : themeMode === 'night' ? 'auto' : 'light'
+                setThemeMode(nextMode)
+              }}
+              className="p-2 sm:px-3 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+              title={`Theme: ${themeMode} (${effectiveTheme}). Click to switch: Night / Light / Auto`}
+            >
+              {effectiveTheme === 'night' ? (
+                <Moon className="w-4 h-4 text-sky-400" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-500" />
+              )}
+              <span className="hidden xl:inline capitalize text-[11px]">
+                {themeMode === 'auto' ? `Auto` : themeMode}
+              </span>
+            </button>
+
             {user ? (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setActiveView('dashboard')}
-                  className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-[#003d29] transition px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80"
+                  className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 transition px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 border border-transparent dark:border-slate-700"
                 >
-                  <User className="w-4 h-4 text-[#003d29]" />
+                  <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>{user.full_name.split(' ')[0]}</span>
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="text-xs text-rose-600 hover:text-rose-700 font-semibold"
+                  className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 font-semibold"
                 >
                   {t.nav.logout}
                 </button>
@@ -1535,9 +1698,9 @@ export default function App() {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-[#003d29] transition"
+                className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition"
               >
-                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
                   <User className="w-4 h-4" />
                 </div>
                 <div className="hidden sm:block text-left">
@@ -1550,7 +1713,7 @@ export default function App() {
             {/* Shopping Cart Pill Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#003d29] text-white hover:bg-[#002f20] transition shadow-md shadow-[#003d29]/20 active:scale-95 cursor-pointer"
+              className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#003d29] hover:bg-[#002f20] text-white transition shadow-md shadow-[#003d29]/20 active:scale-95 cursor-pointer"
             >
               <div className="relative">
                 <ShoppingCart className="w-4 h-4" />
@@ -1577,7 +1740,9 @@ export default function App() {
             transactions={transactions}
             subscriptions={subscriptions}
             allTransactions={allTransactions}
+            products={products}
             onRefresh={() => refreshUserData(token!, user.role === 'ADMIN')}
+            onRefreshProducts={fetchProducts}
             onViewMemo={(trx) => setActiveMemoData({ memo: trx.memo, transaction: trx })}
             onUpdateStatus={handleAdminUpdateStatus}
           />
@@ -1585,21 +1750,21 @@ export default function App() {
           /* Standalone Dutch-Bangla Bank Memo Generator */
           <div className="max-w-2xl mx-auto space-y-6 py-6">
             <div className="text-center space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold">
                 <ShieldCheck className="w-4 h-4" />
                 <span>Academic Tuition & Institutional Bill Payment Generator</span>
               </div>
-              <h2 className="text-3xl font-extrabold text-slate-900">
+              <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">
                 Dutch-Bangla Bank (NexusPay) Memo Generator
               </h2>
-              <p className="text-xs text-slate-500 max-w-lg mx-auto">
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
                 Generate authentic DBBL Bill Payment receipts for university tuition fees or Fund Transfer memos.
               </p>
             </div>
 
             <form
               onSubmit={handleGenerateCustomMemo}
-              className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-5 shadow-xl"
+              className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 shadow-xl"
             >
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -1608,7 +1773,7 @@ export default function App() {
                   className={`p-3.5 rounded-2xl border text-center font-bold text-xs transition ${
                     generatorMode === 'BILL_PAYMENT'
                       ? 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-500/20'
-                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750'
                   }`}
                 >
                   University Bill Payment (Tuition)
@@ -1619,7 +1784,7 @@ export default function App() {
                   className={`p-3.5 rounded-2xl border text-center font-bold text-xs transition ${
                     generatorMode === 'FUND_TRANSFER'
                       ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
-                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750'
                   }`}
                 >
                   Fund Transfer Memo
@@ -1627,51 +1792,51 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                   Transaction ID (LID / TrxID)
                 </label>
                 <input
                   type="text"
                   value={generatorTrxId}
                   onChange={(e) => setGeneratorTrxId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-mono focus:outline-none focus:border-[#003d29] focus:bg-white"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-[#003d29] dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                   Amount in BDT (৳)
                 </label>
                 <input
                   type="number"
                   value={generatorAmount}
                   onChange={(e) => setGeneratorAmount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-mono focus:outline-none focus:border-[#003d29] focus:bg-white"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-[#003d29] dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800"
                 />
               </div>
 
               {generatorMode === 'BILL_PAYMENT' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <div>
-                    <label className="block text-[11px] text-slate-500 mb-1 font-semibold">
+                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-1 font-semibold">
                       Biller / Institution Name
                     </label>
                     <input
                       type="text"
                       value={generatorBiller}
                       onChange={(e) => setGeneratorBiller(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-500 mb-1 font-semibold">
+                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-1 font-semibold">
                       Student ID Number
                     </label>
                     <input
                       type="text"
                       value={generatorStudentId}
                       onChange={(e) => setGeneratorStudentId(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1759,14 +1924,14 @@ export default function App() {
 
             {/* 5. POPULAR CATEGORIES ROW */}
             <section className="space-y-3">
-              <h3 className="text-base font-extrabold text-slate-900">{t.categories.browseHeading}</h3>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{t.categories.browseHeading}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
                 {[
-                  { key: 'Education', label: t.categories.education, icon: GraduationCap, count: t.categories.educationSub, color: 'bg-emerald-50 text-[#003d29] border-emerald-200' },
-                  { key: 'All', label: t.categories.all, icon: Sparkles, count: `${products.length} ${t.categories.allSub}`, color: 'bg-slate-50 text-slate-700 border-slate-200' },
-                  { key: 'AI Bundles', label: t.categories.aiBundles, icon: Crown, count: t.categories.aiBundlesSub, color: 'bg-purple-50 text-purple-700 border-purple-200' },
-                  { key: 'Single Tools', label: t.categories.singleTools, icon: Laptop, count: t.categories.singleToolsSub, color: 'bg-blue-50 text-blue-700 border-blue-200' },
-                  { key: 'Writing & SEO', label: t.categories.writingSeo, icon: PenTool, count: t.categories.writingSeoSub, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+                  { key: 'Education', label: t.categories.education, icon: GraduationCap, count: t.categories.educationSub, color: 'bg-emerald-50 dark:bg-emerald-950/40 text-[#003d29] dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
+                  { key: 'All', label: t.categories.all, icon: Sparkles, count: `${products.length} ${t.categories.allSub}`, color: 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700' },
+                  { key: 'AI Bundles', label: t.categories.aiBundles, icon: Crown, count: t.categories.aiBundlesSub, color: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
+                  { key: 'Single Tools', label: t.categories.singleTools, icon: Laptop, count: t.categories.singleToolsSub, color: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
+                  { key: 'Writing & SEO', label: t.categories.writingSeo, icon: PenTool, count: t.categories.writingSeoSub, color: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
                 ].map((cat) => {
                   const Icon = cat.icon
                   const isActive = activeCategory === cat.key
@@ -1780,7 +1945,7 @@ export default function App() {
                       className={`p-3.5 rounded-2xl border text-left transition flex items-center gap-3.5 cursor-pointer ${
                         isActive
                           ? 'bg-[#003d29] text-white border-[#003d29] shadow-md shadow-[#003d29]/20'
-                          : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:shadow-xs'
+                          : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-200 hover:shadow-xs'
                       }`}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-white/10 text-amber-300' : cat.color}`}>
@@ -1788,7 +1953,7 @@ export default function App() {
                       </div>
                       <div>
                         <span className="text-xs font-black block leading-tight">{cat.label}</span>
-                        <span className={`text-[10px] ${isActive ? 'text-emerald-200' : 'text-slate-400'}`}>
+                        <span className={`text-[10px] ${isActive ? 'text-emerald-200' : 'text-slate-400 dark:text-slate-500'}`}>
                           {cat.count}
                         </span>
                       </div>
@@ -1800,15 +1965,15 @@ export default function App() {
 
             {/* 6. CSE YEAR NAVIGATOR (Visible when Education is active) */}
             {activeCategory === 'Education' && (
-              <section className="bg-white border border-emerald-200/80 rounded-3xl p-5 shadow-xs space-y-3">
+              <section className="bg-white dark:bg-[#111827] border border-emerald-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-xs space-y-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-emerald-700" />
-                    <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                    <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
                       {t.yearNav.selectYear}
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-500 font-medium">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                     {t.yearNav.programDesc}
                   </span>
                 </div>
@@ -1828,11 +1993,11 @@ export default function App() {
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
                         selectedYear === yr.id
                           ? 'bg-[#003d29] text-white shadow-xs'
-                          : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
                       <span>{yr.label}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded ${selectedYear === yr.id ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-slate-600'}`}>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded ${selectedYear === yr.id ? 'bg-white/20 text-white' : 'bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
                         {yr.desc}
                       </span>
                     </button>
@@ -1842,11 +2007,11 @@ export default function App() {
             )}
 
             {/* 7. FILTER PILLS & SORT ROW */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-b border-slate-200 pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-b border-slate-200 dark:border-slate-800 pb-4">
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setSortBy(sortBy === 'price-low' ? 'price-high' : 'price-low')}
-                  className="px-4 py-2 rounded-full text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
+                  className="px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1 cursor-pointer"
                 >
                   <span>{sortBy === 'price-low' ? t.filters.priceLowToHigh : sortBy === 'price-high' ? t.filters.priceHighToLow : t.filters.sortBy}</span>
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -1854,19 +2019,19 @@ export default function App() {
 
                 <button
                   onClick={() => setSortBy('rating')}
-                  className="px-4 py-2 rounded-full text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
+                  className="px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1 cursor-pointer"
                 >
                   <span>{t.filters.topRated}</span>
                   <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
                 <span>{t.filters.sortBy}</span>
                 <select
                   value={sortBy}
                   onChange={(e: any) => setSortBy(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-full px-3 py-1.5 text-xs text-slate-800 font-bold focus:outline-none cursor-pointer"
+                  className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-bold focus:outline-none cursor-pointer"
                 >
                   <option value="featured">{t.filters.featured}</option>
                   <option value="price-low">{t.filters.priceLowToHigh}</option>
@@ -1876,51 +2041,51 @@ export default function App() {
               </div>
             </div>
 
-              {/* View Switcher for Education */}
-              {activeCategory === 'Education' && (
-                <div className="flex items-center justify-between bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setEducationViewMode('accordion')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer ${
-                        educationViewMode === 'accordion'
-                          ? 'bg-[#003d29] text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{t.filters.viewAccordion}</span>
-                    </button>
-                    <button
-                      onClick={() => setEducationViewMode('grid')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer ${
-                        educationViewMode === 'grid'
-                          ? 'bg-[#003d29] text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{t.filters.viewGrid}</span>
-                    </button>
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-semibold px-3 hidden sm:inline">
-                    {t.filters.coreCoursesCount}
-                  </span>
+            {/* View Switcher for Education */}
+            {activeCategory === 'Education' && (
+              <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setEducationViewMode('accordion')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer ${
+                      educationViewMode === 'accordion'
+                        ? 'bg-[#003d29] text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>{t.filters.viewAccordion}</span>
+                  </button>
+                  <button
+                    onClick={() => setEducationViewMode('grid')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer ${
+                      educationViewMode === 'grid'
+                        ? 'bg-[#003d29] text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>{t.filters.viewGrid}</span>
+                  </button>
                 </div>
-              )}
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold px-3 hidden sm:inline">
+                  {t.filters.coreCoursesCount}
+                </span>
+              </div>
+            )}
 
               {/* 8. OFFICIAL ACCORDION: COURSE PROFILES OF CSE CORE COURSES */}
               {activeCategory === 'Education' && educationViewMode === 'accordion' ? (
-                <section className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-sm">
+                <section className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 space-y-6 shadow-sm">
                   {/* Blue Header Tag matching user's image */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="inline-block bg-[#1d4ed8] text-white px-4 py-2 font-black text-sm tracking-wide rounded-md shadow-xs">
                       {t.accordion.headerTag}
                     </div>
-                    <span className="text-xs text-slate-500 font-semibold">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
                       Department of Computer Science & Engineering • Core Undergraduate Curriculum
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-600 font-medium">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                     Click any course bar below to expand its curriculum profile, credit hours, prerequisites, and subscribe with automated SSLCommerz sandbox payment and DBBL NexusPay memo generation.
                   </p>
 
@@ -1961,7 +2126,7 @@ export default function App() {
                       }
 
                       return (
-                        <div key={course.code} className="overflow-hidden rounded-md border border-[#003d29]/20 transition-all">
+                        <div key={course.code} className="overflow-hidden rounded-md border border-[#003d29]/20 dark:border-emerald-800/40 transition-all">
                           <button
                             type="button"
                             onClick={() => setExpandedCoreCourse(isExpanded ? null : course.code)}
@@ -1974,48 +2139,48 @@ export default function App() {
                           </button>
 
                           {isExpanded && (
-                            <div className="p-5 sm:p-6 bg-slate-50 border-t border-emerald-900/10 space-y-4 animate-in fade-in duration-150">
-                              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                            <div className="p-5 sm:p-6 bg-slate-50 dark:bg-[#0c1322] border-t border-emerald-900/10 dark:border-slate-800 space-y-4 animate-in fade-in duration-150">
+                              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs font-black bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md">
+                                  <span className="text-xs font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-md">
                                     {t.accordion.credits}: {course.credits}
                                   </span>
-                                  <span className="text-xs font-bold bg-amber-100 text-amber-900 px-2.5 py-1 rounded-md border border-amber-200">
+                                  <span className="text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800">
                                     {t.accordion.prerequisite}: {course.prereq === 'None' ? t.accordion.none : course.prereq}
                                   </span>
                                 </div>
                                 <div className="text-right">
-                                  <span className="text-xs text-slate-400">Subscription Fee:</span>
-                                  <span className="text-xl font-black text-[#003d29] ml-1.5">৳ {course.price}.00</span>
+                                  <span className="text-xs text-slate-400 dark:text-slate-500">Subscription Fee:</span>
+                                  <span className="text-xl font-black text-[#003d29] dark:text-emerald-400 ml-1.5">৳ {course.price}.00</span>
                                 </div>
                               </div>
 
-                              <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                                 {course.desc}
                               </p>
 
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-xs">
-                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white border border-slate-200">
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                                  <span className="font-semibold text-slate-700">Lecture Slides & Handouts</span>
+                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-[#151f30] border border-slate-200 dark:border-slate-800">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                  <span className="font-semibold text-slate-700 dark:text-slate-300">Lecture Slides & Handouts</span>
                                 </div>
-                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white border border-slate-200">
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                                  <span className="font-semibold text-slate-700">Lab Codes & Assignment Solutions</span>
+                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-[#151f30] border border-slate-200 dark:border-slate-800">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                  <span className="font-semibold text-slate-700 dark:text-slate-300">Lab Codes & Assignment Solutions</span>
                                 </div>
-                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white border border-slate-200">
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                                  <span className="font-semibold text-slate-700">Solved Past Mid & Final Exams</span>
+                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-[#151f30] border border-slate-200 dark:border-slate-800">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                  <span className="font-semibold text-slate-700 dark:text-slate-300">Solved Past Mid & Final Exams</span>
                                 </div>
                               </div>
 
-                              <div className="pt-3 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200">
+                              <div className="pt-3 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
                                 <button
                                   type="button"
                                   onClick={() => addToCart(matchingProd)}
-                                  className="px-5 py-2.5 rounded-full font-bold text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                  className="px-5 py-2.5 rounded-full font-bold text-xs text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                 >
-                                  <ShoppingCart className="w-3.5 h-3.5 text-slate-500" />
+                                  <ShoppingCart className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                                   <span>{t.cards.addToCart}</span>
                                 </button>
 
@@ -2040,12 +2205,12 @@ export default function App() {
                 <section id="products-grid-section" className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-black text-slate-900">
+                      <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                         {activeCategory === 'Education'
                           ? `Computer Science & Engineering Courses & Bundles (${selectedYear})`
                           : 'Subscriptions & Tools For You!'}
                       </h2>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Showing {filteredProducts.length} verified courses & subscriptions with direct SSLCommerz sandbox & DBBL NexusPay verification.
                       </p>
                     </div>
@@ -2059,11 +2224,11 @@ export default function App() {
                   return (
                     <div
                       key={prod.id}
-                      className="group bg-white rounded-3xl border border-slate-200/90 p-5 flex flex-col justify-between hover:shadow-xl hover:border-slate-300 transition-all duration-300 relative"
+                      className="group bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-5 flex flex-col justify-between hover:shadow-xl hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 relative"
                     >
                       {/* Top Bar: Badge & Wishlist */}
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                           {prod.badge || (isCSECourse ? 'B.Sc. CSE' : 'AI TOOL')}
                         </span>
 
@@ -2072,7 +2237,7 @@ export default function App() {
                           className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
                             isWishlisted
                               ? 'bg-rose-50 text-rose-500'
-                              : 'bg-slate-100/80 text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                              : 'bg-slate-100/80 dark:bg-slate-800 text-slate-400 hover:text-rose-500 hover:bg-rose-50'
                           }`}
                         >
                           <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-500' : ''}`} />
@@ -2080,28 +2245,28 @@ export default function App() {
                       </div>
 
                       {/* Visual Graphic Box */}
-                      <div className={`w-full h-44 rounded-2xl bg-gradient-to-tr ${prod.bgTint || 'from-slate-100 to-gray-50'} flex flex-col items-center justify-center p-4 relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-300`}>
-                        <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center text-xl font-black text-[#003d29]">
+                      <div className={`w-full h-44 rounded-2xl bg-gradient-to-tr ${prod.bgTint || 'from-slate-100 to-gray-50 dark:from-slate-800/80 dark:to-slate-900'} flex flex-col items-center justify-center p-4 relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-300`}>
+                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-900 shadow-md flex items-center justify-center text-xl font-black text-[#003d29] dark:text-emerald-400 border border-transparent dark:border-slate-700">
                           {prod.courseCode ? (
-                            <Code className="w-7 h-7 text-[#003d29]" />
+                            <Code className="w-7 h-7 text-[#003d29] dark:text-emerald-400" />
                           ) : prod.product_type === 'PACKAGE' ? (
                             <Award className="w-7 h-7 text-amber-500" />
                           ) : (
-                            <Sparkles className="w-7 h-7 text-emerald-600" />
+                            <Sparkles className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
                           )}
                         </div>
 
                         {prod.courseCode && (
-                          <span className="text-sm font-black text-slate-900 mt-2 font-mono">
+                          <span className="text-sm font-black text-slate-900 dark:text-white mt-2 font-mono">
                             {prod.courseCode}
                           </span>
                         )}
 
-                        <span className="text-[11px] font-black text-slate-700 text-center line-clamp-1 mt-0.5">
+                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 text-center line-clamp-1 mt-0.5">
                           {prod.title.replace(prod.courseCode || '', '').trim()}
                         </span>
 
-                        <span className="text-[10px] text-slate-500 font-semibold">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
                           {prod.credits ? prod.credits : prod.product_type === 'PACKAGE' ? 'Yearly Access' : 'Monthly Access'}
                         </span>
                       </div>
@@ -2110,30 +2275,30 @@ export default function App() {
                       <div className="space-y-2 pt-4">
                         <div className="flex items-center justify-between gap-1 text-[10px]">
                           {prod.year && (
-                            <span className="font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                            <span className="font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                               {prod.year} {prod.semester ? `• ${prod.semester}` : ''}
                             </span>
                           )}
                           {prod.prerequisite && (
-                            <span className="font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            <span className="font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">
                               Pre-req: {prod.prerequisite}
                             </span>
                           )}
                         </div>
 
-                        <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-[#003d29] transition line-clamp-1">
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white group-hover:text-[#003d29] dark:group-hover:text-emerald-400 transition line-clamp-1">
                           {prod.title}
                         </h3>
 
-                        <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 min-h-[32px]">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[32px]">
                           {prod.description}
                         </p>
 
                         {/* Feature Checklist preview */}
                         <div className="pt-1 space-y-1">
                           {prod.features.slice(0, 2).map((feat, i) => (
-                            <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-600 truncate">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                            <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-300 truncate">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                               <span className="truncate">{feat}</span>
                             </div>
                           ))}
@@ -2146,20 +2311,20 @@ export default function App() {
                               <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                             ))}
                           </div>
-                          <span className="text-slate-400 text-[11px] font-medium">
+                          <span className="text-slate-400 dark:text-slate-500 text-[11px] font-medium">
                             ({prod.reviewsCount || 120})
                           </span>
                         </div>
 
                         {/* Price */}
-                        <div className="pt-2 flex items-baseline justify-between border-t border-slate-100">
+                        <div className="pt-2 flex items-baseline justify-between border-t border-slate-100 dark:border-slate-800">
                           <div>
-                            <span className="text-xl font-black text-slate-900">৳ {prod.price_bdt}</span>
-                            <span className="text-[11px] text-slate-400 ml-1">
+                            <span className="text-xl font-black text-slate-900 dark:text-white">৳ {prod.price_bdt}</span>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-1">
                               {prod.product_type === 'PACKAGE' ? '/ term' : '/ course'}
                             </span>
                           </div>
-                          <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
                             Immediate Access
                           </span>
                         </div>
@@ -2169,9 +2334,9 @@ export default function App() {
                       <div className="pt-4 grid grid-cols-2 gap-2">
                         <button
                           onClick={() => addToCart(prod)}
-                          className="py-2.5 px-3 rounded-full font-bold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200/80 transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="py-2.5 px-3 rounded-full font-bold text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <ShoppingCart className="w-3.5 h-3.5 text-slate-500" />
+                          <ShoppingCart className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                           <span>{t.cards.addToCart}</span>
                         </button>
 
@@ -2198,25 +2363,25 @@ export default function App() {
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div
             onClick={() => setIsCartOpen(false)}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
           />
 
           <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col">
-              <div className="p-6 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div className="w-screen max-w-md bg-white dark:bg-[#0f172a] shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800">
+              <div className="p-6 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-[#003d29] text-white flex items-center justify-center font-bold text-xs">
                     <ShoppingCart className="w-4 h-4 text-amber-300" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-slate-900">{t.cartDrawer.title}</h3>
-                    <p className="text-[11px] text-slate-500">{totalCartCount} {t.cartDrawer.itemsSelected}</p>
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">{t.cartDrawer.title}</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{totalCartCount} {t.cartDrawer.itemsSelected}</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsCartOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2225,10 +2390,10 @@ export default function App() {
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {cart.length === 0 ? (
                   <div className="text-center py-16 space-y-3">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-400">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mx-auto flex items-center justify-center text-slate-400">
                       <BookOpen className="w-8 h-8" />
                     </div>
-                    <h4 className="text-sm font-bold text-slate-800">{t.cartDrawer.emptyTitle}</h4>
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">{t.cartDrawer.emptyTitle}</h4>
                     <p className="text-xs text-slate-400 max-w-xs mx-auto">
                       {t.cartDrawer.emptyDesc}
                     </p>
@@ -2237,28 +2402,28 @@ export default function App() {
                   cart.map((item) => (
                     <div
                       key={item.product.id}
-                      className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3"
+                      className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3"
                     >
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-extrabold text-slate-900 truncate">
+                        <h4 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
                           {item.product.title}
                         </h4>
-                        <span className="text-xs font-black text-[#003d29]">
+                        <span className="text-xs font-black text-[#003d29] dark:text-emerald-400">
                           ৳ {item.product.price_bdt}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-2 py-1">
+                      <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-2 py-1">
                         <button
                           onClick={() => updateQuantity(item.product.id, -1)}
-                          className="text-slate-500 hover:text-slate-900 cursor-pointer"
+                          className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="text-xs font-bold text-slate-800 px-1">{item.quantity}</span>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 px-1">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.product.id, 1)}
-                          className="text-slate-500 hover:text-slate-900 cursor-pointer"
+                          className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -2276,19 +2441,19 @@ export default function App() {
               </div>
 
               {cart.length > 0 && (
-                <div className="p-6 bg-slate-50 border-t border-slate-200 space-y-4">
+                <div className="p-6 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-4">
                   <div className="space-y-1.5 text-xs">
-                    <div className="flex justify-between text-slate-500">
+                    <div className="flex justify-between text-slate-500 dark:text-slate-400">
                       <span>{t.cartDrawer.subtotal}</span>
                       <span>৳ {totalCartAmount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-slate-500">
+                    <div className="flex justify-between text-slate-500 dark:text-slate-400">
                       <span>{t.cartDrawer.fee}</span>
-                      <span className="text-emerald-700 font-bold">{t.cartDrawer.free}</span>
+                      <span className="text-emerald-700 dark:text-emerald-400 font-bold">{t.cartDrawer.free}</span>
                     </div>
-                    <div className="flex justify-between text-sm font-black text-slate-900 pt-2 border-t border-slate-200">
+                    <div className="flex justify-between text-sm font-black text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-800">
                       <span>{t.cartDrawer.total}</span>
-                      <span className="text-[#003d29] text-base">৳ {totalCartAmount.toFixed(2)}</span>
+                      <span className="text-[#003d29] dark:text-emerald-400 text-base">৳ {totalCartAmount.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -2311,27 +2476,27 @@ export default function App() {
       )}
 
       {/* 10. FOOTER */}
-      <footer className="border-t border-slate-200 bg-white py-12 mt-16 text-slate-600 text-xs">
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0b0f17] py-12 mt-16 text-slate-600 dark:text-slate-400 text-xs transition-colors">
         <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-[#003d29] text-white flex items-center justify-center font-bold text-sm shadow-md">
-              <GraduationCap className="w-5 h-5 text-amber-300" />
+            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 flex items-center justify-center shadow-md overflow-hidden flex-shrink-0">
+              <img src={ezopyLogo} alt="EZOPY MART TECH" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-slate-900 font-black text-sm block">{t.footer.title}</span>
-              <span className="text-[11px] text-slate-500 font-medium">
+              <span className="text-slate-900 dark:text-white font-black text-base block uppercase">EZOPY MART TECH</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 {t.footer.dedication}
               </span>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-6 text-slate-500 font-semibold">
-            <span className="hover:text-slate-900">{t.footer.address}</span>
-            <span className="hover:text-slate-900">{t.footer.dbblAccount}</span>
-            <span className="hover:text-slate-900">{t.footer.support}</span>
+          <div className="flex flex-wrap gap-6 text-slate-500 dark:text-slate-400 font-semibold">
+            <span className="hover:text-slate-900 dark:hover:text-white transition-colors">{t.footer.address}</span>
+            <span className="hover:text-slate-900 dark:hover:text-white transition-colors">{t.footer.dbblAccount}</span>
+            <span className="hover:text-slate-900 dark:hover:text-white transition-colors">{t.footer.support}</span>
           </div>
 
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
             {t.footer.copyright}
           </p>
         </div>
@@ -2355,7 +2520,11 @@ export default function App() {
         <NexusPayMemoModal
           memo={activeMemoData.memo}
           transaction={activeMemoData.transaction}
-          onClose={() => setActiveMemoData(null)}
+          onClose={() => {
+            setActiveMemoData(null)
+            setActiveView('dashboard')
+            refreshUserData()
+          }}
         />
       )}
 

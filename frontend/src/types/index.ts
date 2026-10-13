@@ -24,6 +24,15 @@ export interface Product {
   features: string[]
   icon_name?: string
   is_active: boolean
+  rating?: number
+  reviewsCount?: number
+  categoryTag?: string
+  year?: string
+  credits?: string
+  prerequisite?: string
+  semester?: string
+  courseCode?: string
+  bgTint?: string
 }
 
 export interface TransactionMemo {

@@ -1,6 +1,26 @@
-# ⚡ SoftMart IT — Premium AI & Educational Tools Subscription Marketplace
+# ⚡ SAMJAP Mart — Premium AI Tools & B.Sc. CSE Academic Curriculum Hub
 
-A production-grade, full-stack application built for **SoftMart IT** (Bangladesh's leading AI & SEO Tools platform) featuring an automated **Dutch-Bangla Bank (NexusPay)** Transaction Memo and institutional receipt engine.
+> *Dedicated with warmth to Jannat Farhana Popy • Curated by Shah Abdul Mazid*
+
+A modern, full-stack e-commerce marketplace and academic learning platform. Built with **FastAPI**, **React 19**, **Vite**, **Tailwind CSS**, and **SSLCommerz / DBBL NexusPay Payment Gateways**.
+
+---
+
+## 🌟 Recent Major Updates
+
+- 🛍️ **Admin Product & Price Management via Dashboard**: Admins can now create new courses/tools, update titles, badges, and descriptions, adjust prices in 1 click (with quick-edit modal), toggle active status, or delete products directly from the live dashboard.
+- 🌐 **8-Language Internationalization (i18n)**: Seamless language switcher supporting English (`en`), বাংলা (`bn`), हिन्दी (`hi`), Deutsch (`de`), Suomi (`fi`), Français (`fr`), Español (`es`), and العربية (`ar` with automatic RTL layout).
+- 🔒 **Bcrypt Password Security**: All passwords stored securely in SQLite/PostgreSQL as salted Bcrypt hashes (`$2b$12$...`).
+- 👁️ **Password Visibility Toggle**: Show/Hide password toggle (`<Eye />` / `<EyeOff />`) with 1-click admin and customer demo login preset chips.
+- 🎓 **Complete 4-Year B.Sc. CSE Curriculum**: All 21 core academic courses across 4 Years (1st, 2nd, 3rd Semesters) with prerequisites, credit breakdown, and dual view (Interactive Curriculum Accordion & Product Cards).
+- 💳 **Dual Payment Infrastructure**:
+  - **SSLCommerz Gateway**: Automated checkout session initialization, sandbox testing, IPN callbacks, and return redirects.
+  - **DBBL NexusPay Generator**: Printable & PDF-ready Dutch-Bangla Bank Fund Transfer and Bill Payment memos.
+- 🐳 **Docker & Cloud Deployment Ready**:
+  - **Backend on Render.com**: Production Dockerfile with dynamic `$PORT` handling and auto-converted `postgresql+asyncpg://` connections.
+  - **Frontend on Vercel**: Configured via `vercel.json` with SPA routing rewrites and dynamic `VITE_BACKEND_URL` environment variables.
+  - **Local Docker Compose**: 1-command startup via `docker compose up --build`.
+- 📱 **Full-Screen Modern Responsive Layout**: Sleek compact hero, category navigation, sticky header, and mobile/desktop optimization.
 
 ---
 
@@ -8,108 +28,141 @@ A production-grade, full-stack application built for **SoftMart IT** (Bangladesh
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 19 (Vite), TypeScript, Tailwind CSS, Lucide Icons |
-| **Backend** | FastAPI (Python 3.11+), Async SQLAlchemy 2.0, Pydantic v2 |
+| **Frontend** | React 19, TypeScript, Vite 8, Tailwind CSS 4, Lucide Icons |
+| **Backend** | FastAPI (Python 3.11+), Async SQLAlchemy 2.0, Pydantic v2, Uvicorn |
 | **Database** | PostgreSQL (with `asyncpg`) or high-concurrency Async SQLite (`aiosqlite`) |
-| **Authentication** | OAuth2 Bearer Tokens, JWT (`python-jose`), Passlib & native `bcrypt` |
-| **Banking Engine**| Dutch-Bangla Bank (DBBL) NexusPay Slip Generation (Fund Transfer & Bill Payment) |
-| **Theme / Design** | Deep Dark Canvas (`#0d0b18`, `#16122b`), glassmorphism, purple/gold accents |
+| **Security & Auth** | OAuth2 Bearer Tokens, JWT (`python-jose`), Salted `bcrypt` password hashing |
+| **Payment Gateways**| SSLCommerz Sandbox / Live Engine + DBBL NexusPay Slip Generator |
+| **Deployment** | Docker, Render (Backend), Vercel (Frontend), Docker Compose |
 
 ---
 
-## 📁 Project Structure
+## 🔑 Default Test Accounts & Credentials
+
+All accounts are auto-seeded into the database on startup with **Bcrypt-hashed passwords**:
+
+### 👑 Administrators (Full Admin Control Panel Access)
+
+| Name | Email | Password | Role | Permissions |
+|---|---|---|---|---|
+| **System Administrator** | `admin@samjap.mart` | `Admin@123` | `ADMIN` | Manage products & prices, orders, verify transactions |
+| **Shah Abdul Mazid** | `mazid@samjap.mart` | `Mazid@123` | `ADMIN` | Full control: Add/Update/Delete products, pricing & store |
+| **Jannat Farhana Popy ❤️** | `popy@samjap.mart` | `Popy@123` | `ADMIN` | Full control: Add/Update/Delete products, pricing & store |
+
+### 👤 Demo Customers (Student & Subscriber Access)
+
+| Name | Email | Password | Role | Permissions |
+|---|---|---|---|---|
+| **Demo Customer 1** | `customer1@gmail.com` | `Customer@123` | `CUSTOMER` | Browse tools, enroll in CSE courses, SSL checkout |
+| **Demo Customer 2** | `customer2@yahoo.com` | `Customer@123` | `CUSTOMER` | Browse tools, enroll in CSE courses, SSL checkout |
+| **Demo Customer 3** | `customer3@outlook.com` | `Customer@123` | `CUSTOMER` | Browse tools, enroll in CSE courses, SSL checkout |
+
+> [!TIP]
+> **1-Click Quick Fill**: When opening the **Sign In** modal on the website, click any of the preset chips (`[admin]`, `[mazid]`, `[popy ❤️]`, `[customer1]`, `[customer2]`, `[customer3]`) to auto-fill the form instantly, and click the **Eye icon** to preview the password!
+
+---
+
+## 📁 Project Directory Structure
 
 ```text
 E-Commerce/
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   │       ├── auth.py          # /auth/register, /auth/login, /auth/me
-│   │   │       ├── products.py      # /products (GET, POST admin)
-│   │   │       ├── checkout.py      # /checkout/submit, /my-history, /status/{id}
-│   │   │       └── memos.py         # /memos/{trx_id}, /memos/generate
+│   │   ├── api/v1/
+│   │   │   ├── auth.py          # /auth/register, /auth/login, /auth/me
+│   │   │   ├── products.py      # /products (GET, POST admin)
+│   │   │   ├── checkout.py      # /checkout/submit, /my-history, /status/{id}
+│   │   │   └── memos.py         # /memos/{trx_id}, /memos/generate
 │   │   ├── core/
-│   │   │   ├── config.py        # Settings, DBBL receiver account constants
+│   │   │   ├── config.py        # Settings & dynamic asyncpg DB URL handling
 │   │   │   ├── database.py      # Async SQLAlchemy engine & AsyncSessionLocal
 │   │   │   ├── security.py      # Bcrypt hashing & JWT token encoder
 │   │   │   └── deps.py          # get_current_user & get_current_admin guards
 │   │   ├── models/
-│   │   │   └── entities.py      # User, Product, Subscription, Transaction, TransactionMemo
+│   │   │   └── entities.py      # User, Product, Subscription, Transaction models
 │   │   ├── schemas/
-│   │   │   └── all_schemas.py   # Pydantic v2 request/response models
-│   │   └── main.py              # FastAPI app with automated DB tables & data seeding
-│   ├── .env                     # Active environment variables
-│   ├── .env.example             # Template credentials & connection strings
-│   └── requirements.txt         # Pinned backend dependencies
+│   │   │   └── all_schemas.py   # Pydantic v2 schemas
+│   │   └── main.py              # User seeding & router mounting
+│   ├── main.py                  # SSLCommerz callback routes & unified entrypoint
+│   ├── Dockerfile               # Production Dockerfile for Render ($PORT aware)
+│   ├── .dockerignore            # Docker ignore file
+│   ├── .env                     # Local environment variables
+│   ├── .env.example             # Template with Render/Vercel settings
+│   └── requirements.txt         # Backend Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── NexusPayMemoModal.tsx # Pixel-perfect DBBL / NexusPay Receipt Modal (Print/PDF)
-│   │   │   ├── CheckoutModal.tsx     # BD Payment modal (NexusPay, bKash, Nagad, Rocket)
-│   │   │   ├── AuthModal.tsx         # JWT Login / Registration dialog with quick presets
-│   │   │   └── DashboardView.tsx     # Active subscriptions, transaction history & admin panel
+│   │   │   ├── AuthModal.tsx         # Login/Register with password eye toggle & presets
+│   │   │   ├── CheckoutModal.tsx     # SSLCommerz & manual gateway modal
+│   │   │   ├── DashboardView.tsx     # Student dashboard & Admin Control Panel
+│   │   │   └── NexusPayMemoModal.tsx # Printable DBBL payment memo slip
+│   │   ├── translations/
+│   │   │   └── index.ts              # 8-language i18n translation dictionary
 │   │   ├── types/
-│   │   │   └── index.ts         # TypeScript schema definitions
-│   │   ├── App.tsx              # Marketplace homepage, package tiers & single tools
-│   │   └── main.tsx             # React DOM root
-│   ├── index.html               # Custom Tailwind dark canvas config & print styles
+│   │   │   └── index.ts              # TypeScript models
+│   │   ├── App.tsx                   # Main store, course catalog & language bar
+│   │   └── main.tsx                  # React DOM mount point
+│   ├── Dockerfile               # Multi-stage Nginx Dockerfile
+│   ├── nginx.conf               # SPA routing Nginx config
+│   ├── vercel.json              # Vercel deployment & rewrite rules
+│   ├── .env.example             # Frontend environment variables template
 │   └── package.json             # Frontend dependencies
-└── Readme.md
+├── docker-compose.yml           # 1-command local full-stack Docker orchestration
+├── DEPLOYMENT.md                # Render & Vercel deployment instructions
+└── Readme.md                    # Project documentation
 ```
 
 ---
 
-## ⚡ Key Highlights & Features
+## 🚀 Running Locally
 
-### 1. Subscription Packages
-- **Standard (৳299/mo)**: ChatGPT Plus, Grammarly Premium, Quillbot Premium.
-- **Premium (৳599/mo - MOST POPULAR)**: ChatGPT-4o & Canvas, Turnitin Plagiarism & AI, Perplexity Pro, Stealth Writer.
-- **Advance (৳850/mo - ALL-IN-ONE MASTER)**: Coursera Plus, Udemy Business, Midjourney/Claude, VIP concierge.
-- **SEO Combo Bundle (৳299/mo)**: Grammarly, Quillbot, WordHero, indexing tools.
+### Option 1: Native Terminal Run
 
-### 2. Single Tools Marketplace
-- Instant checkout for **ChatGPT Plus (৳200/mo)**, **Grammarly (৳200/mo)**, **Quillbot (৳200/mo)**, **Stealth Writer (৳399/mo)**, and **Coursera Plus (৳200/mo)**.
-
-### 3. Pixel-Perfect Dutch-Bangla Bank (NexusPay) Receipts
-- **Mode A: Fund Transfer Memo**
-  - Beneficiary Info: Receiver Name (`SOFTMART IT ENTERPRISE`), Bank (`Dutch-Bangla Bank PLC`), Account (`107.110.198425`).
-  - Channel Info: Card Type (`NEXUS DEBIT`), Card Number masked, NexusPay ID, Transaction ID (`LID02082191058`), Date & Time.
-- **Mode B: Bill Payment Memo**
-  - DBBL Red/Blue/Green accent line, Institutional Biller (e.g. `East West University`), Biller Code, Student ID, Paid From channel, Fee: BDT 0.00.
-  - Print & PDF download buttons with CSS print styles.
-
-### 4. Admin Control & Subscription Issuance
-- Admin review panel to approve pending bank transactions.
-- Automated subscription activation with credential distribution (login portals & access tokens).
-
----
-
-## 🚀 How to Run Locally
-
-### 1. Start the Backend (FastAPI)
+#### 1. Start Backend (FastAPI)
 ```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-- Interactive Swagger API Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Database tables and initial catalog are seeded automatically on first boot!
+- **Backend API & Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Backend Root**: [http://localhost:8000/](http://localhost:8000/)
 
-### 2. Start the Frontend (React + Vite)
+#### 2. Start Frontend (React + Vite)
 In a second terminal:
 ```powershell
 cd frontend
 npm run dev
 ```
-- Open [http://localhost:5173](http://localhost:5173) in your browser.
+- **Frontend Store**: [http://localhost:5174](http://localhost:5174) *(Fixed port `5174`)*
 
 ---
 
-## 🔑 Default Credentials for Testing
+### Option 2: Docker Compose (All-in-One)
 
-| Role | Email | Password |
-|---|---|---|
-| **System Admin** | `admin@softmart.it` | `Admin@SoftMart2026` |
-| **Customer** | `customer@softmart.it` | `Customer@123` |
-*(One-click demo buttons are available in the Login Panel!)*
+Run both the frontend and backend in isolated containers with a single command:
+
+```powershell
+docker compose up --build
+```
+- **Frontend**: [http://localhost:5174](http://localhost:5174)
+- **Backend**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## 🌐 Production Deployment Summary
+
+For full details, see the dedicated [DEPLOYMENT.md](file:///c:/Users/LENOVO/Desktop/E-Commerce/DEPLOYMENT.md) guide.
+
+1. **Backend on Render.com**:
+   - Web Service pointing to `backend/` directory.
+   - Environment: Docker (`backend/Dockerfile`).
+   - Env vars: `APP_BASE_URL`, `FRONTEND_URL`, `SSL_STORE_ID`, `SSL_STORE_PASSWORD`, `DATABASE_URL`.
+2. **Frontend on Vercel.com**:
+   - Vite project pointing to `frontend/` directory.
+   - `vercel.json` rewrites all paths to `/index.html`.
+   - Env var: `VITE_BACKEND_URL=https://<your-render-backend-url>.onrender.com`.
+
+---
+
+## 📄 License
+Crafted with ❤️ for students, educators, and developers. All rights reserved.

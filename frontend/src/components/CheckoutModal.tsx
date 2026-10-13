@@ -153,6 +153,8 @@ export const CheckoutModal: React.FC<Props> = ({
         },
         body: JSON.stringify({
           product_id: product.id,
+          product_title: product.title,
+          price_bdt: product.price_bdt,
           payment_method: method,
           transaction_id: trxId.trim(),
           sender_account: senderAccount.trim() || undefined,

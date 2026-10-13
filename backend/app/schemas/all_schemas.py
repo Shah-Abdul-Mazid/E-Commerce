@@ -41,6 +41,16 @@ class ProductCreate(BaseModel):
     features: List[str] = []
     icon_name: Optional[str] = None
 
+class ProductUpdate(BaseModel):
+    title: Optional[str] = None
+    badge: Optional[str] = None
+    description: Optional[str] = None
+    product_type: Optional[ProductType] = None
+    price_bdt: Optional[float] = None
+    features: Optional[List[str]] = None
+    icon_name: Optional[str] = None
+    is_active: Optional[bool] = None
+
 class ProductResponse(BaseModel):
     id: str
     title: str
@@ -59,6 +69,8 @@ class ProductResponse(BaseModel):
 # Checkout & Transaction Schemas
 class CheckoutSubmit(BaseModel):
     product_id: str
+    product_title: Optional[str] = None
+    price_bdt: Optional[float] = None
     payment_method: PaymentMethod
     transaction_id: str
     sender_account: Optional[str] = None
