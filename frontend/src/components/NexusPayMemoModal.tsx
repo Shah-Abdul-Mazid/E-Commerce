@@ -106,7 +106,7 @@ export const NexusPayMemoModal: React.FC<Props> = ({ memo, transaction, onClose 
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-slate-500">Receiver Name:</span>
-                      <span className="font-bold text-slate-900 text-right">{memo.receiver_name || 'SAMJAP MART (MAZID & POPY)'}</span>
+                      <span className="font-bold text-slate-900 text-right">{memo.receiver_name || 'EZOPY MART TECH'}</span>
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-slate-500">Bank:</span>
@@ -232,7 +232,7 @@ export const NexusPayMemoModal: React.FC<Props> = ({ memo, transaction, onClose 
         {/* Modal Bottom Actions */}
         <div className="p-3 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-[11px] text-slate-400">
-            Keep this slip as official proof of payment for your SAMJAP Mart account.
+            Keep this slip as official proof of payment for your EZOPY MART TECH account.
           </p>
           {onClose && (
             <button

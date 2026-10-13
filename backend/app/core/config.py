@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List  # noqa: UP035
 from urllib.parse import quote_plus, unquote
+
 from dotenv import load_dotenv
 
 # Load backend/.env and root .env if present
@@ -16,7 +17,7 @@ def sanitize_mongodb_uri(raw_uri: str) -> str:
     even when the password contains special characters like '@' or '$'.
     """
     uri = raw_uri.strip()
-    if not (uri.startswith("mongodb://") or uri.startswith("mongodb+srv://")):
+    if not (uri.startswith(("mongodb://", "mongodb+srv://"))):
         return uri
 
     scheme, rest = uri.split("://", 1)
@@ -60,7 +61,7 @@ class Settings:
     DBBL_RECEIVER_ACCOUNT: str = os.getenv("DBBL_RECEIVER_ACCOUNT", "")
 
     # CORS Origins from environment (.env)
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: List[str] = [  # noqa: RUF012, UP006
         origin.strip()
         for origin in os.getenv("BACKEND_CORS_ORIGINS", "*").split(",")
         if origin.strip()

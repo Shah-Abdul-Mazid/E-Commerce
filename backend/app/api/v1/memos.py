@@ -1,19 +1,19 @@
 import uuid
 from datetime import datetime
+
+from app.core.config import settings
+from app.core.database import get_async_db
+from app.models.entities import MemoType
+from app.schemas.all_schemas import GenerateMemoRequest, TransactionMemoResponse
 from fastapi import APIRouter, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
-
-from app.core.database import get_async_db
-from app.core.config import settings
-from app.models.entities import MemoType
-from app.schemas.all_schemas import TransactionMemoResponse, GenerateMemoRequest
 
 router = APIRouter(prefix="/memos", tags=["Dutch-Bangla Bank & NexusPay Memos"])
 
 
 @router.get("/{transaction_id}")
 async def get_memo_by_transaction_id(
-    transaction_id: str, db: AsyncIOMotorDatabase = Depends(get_async_db)
+    transaction_id: str, db: AsyncIOMotorDatabase = Depends(get_async_db)  # noqa: B008
 ):
     trx = await db["transactions"].find_one(
         {
@@ -104,8 +104,7 @@ async def generate_memo_manually(payload: GenerateMemoRequest):
             "receiver_account": payload.receiver_account
             or settings.DBBL_RECEIVER_ACCOUNT,
             "sender_card_type": payload.sender_card_type or "NEXUS DEBIT",
-            "sender_card_number": payload.sender_card_number
-            or "9011-XXXX-XXXX-4581",
+            "sender_card_number": payload.sender_card_number or "9011-XXXX-XXXX-4581",
             "nexus_pay_id": payload.nexus_pay_id or "NX-882941",
             "biller_name": payload.biller_name or "East West University",
             "biller_code": payload.biller_code or "DBBL-EDU-8810",

@@ -45,7 +45,7 @@ export const CheckoutModal: React.FC<Props> = ({
     NEXUSPAY_DBBL: {
       title: 'Dutch-Bangla Bank (NexusPay / DBBL Card)',
       accountNo: '107.110.198425',
-      accountName: 'SAMJAP MART (MAZID & POPY)',
+      accountName: 'EZOPY MART TECH',
       tag: 'Dutch-Bangla Bank PLC, Gulshan Branch',
       instruction:
         'Open your NexusPay app or DBBL ATM/NetBanking -> Transfer Money / Bill Pay -> Account: 107.110.198425 -> Copy the Transaction ID (e.g. LID02082191058 or TrxID).',
@@ -53,15 +53,15 @@ export const CheckoutModal: React.FC<Props> = ({
     BKASH: {
       title: 'bKash Merchant / Personal Payment',
       accountNo: '01711-009988',
-      accountName: 'SAMJAP Mart Official',
+      accountName: 'EZOPY MART TECH',
       tag: 'bKash Merchant Payment',
       instruction:
-        'Dial *247# or open bKash app -> Make Payment / Send Money -> To 01711-009988 -> Enter Reference: SAMJAP -> Submit TrxID below.',
+        'Dial *247# or open bKash app -> Make Payment / Send Money -> To 01711-009988 -> Enter Reference: EZOPY -> Submit TrxID below.',
     },
     NAGAD: {
       title: 'Nagad Merchant Payment',
       accountNo: '01844-998877',
-      accountName: 'SAMJAP Mart Bangladesh',
+      accountName: 'EZOPY MART TECH',
       tag: 'Nagad Payment Gateway',
       instruction:
         'Open Nagad app -> Merchant Pay -> 01844-998877 -> Amount: ৳' +
@@ -71,7 +71,7 @@ export const CheckoutModal: React.FC<Props> = ({
     ROCKET: {
       title: 'DBBL Rocket Wallet Payment',
       accountNo: '01711-009988-9',
-      accountName: 'SAMJAP MART',
+      accountName: 'EZOPY MART TECH',
       tag: 'DBBL Rocket Core',
       instruction:
         'Dial *322# or open Rocket app -> Merchant Pay / Bill Pay -> Biller ID: 8810 -> Amount ৳' +

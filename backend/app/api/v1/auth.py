@@ -1,13 +1,14 @@
 import os
 import uuid
 from datetime import datetime
+
+from app.core.database import get_async_db
+from app.core.deps import get_current_user
+from app.core.security import create_access_token, get_password_hash, verify_password
+from app.models.entities import UserRole
+from app.schemas.all_schemas import TokenResponse, UserLogin, UserRegister, UserResponse
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.core.database import get_async_db
-from app.core.security import get_password_hash, verify_password, create_access_token
-from app.core.deps import get_current_user
-from app.models.entities import UserRole
-from app.schemas.all_schemas import UserRegister, UserLogin, UserResponse, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -24,7 +25,8 @@ def _get_admin_emails() -> set:
 
 @router.post("/register", response_model=TokenResponse)
 async def register(
-    payload: UserRegister, db: AsyncIOMotorDatabase = Depends(get_async_db)
+    payload: UserRegister,
+    db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
 ):
     email_lower = payload.email.lower()
     existing = await db["users"].find_one({"email": email_lower})
@@ -34,11 +36,7 @@ async def register(
             detail="A user with this email address already exists.",
         )
 
-    role = (
-        UserRole.ADMIN
-        if email_lower in _get_admin_emails()
-        else UserRole.CUSTOMER
-    )
+    role = UserRole.ADMIN if email_lower in _get_admin_emails() else UserRole.CUSTOMER
 
     user_doc = {
         "id": str(uuid.uuid4()),
@@ -48,7 +46,7 @@ async def register(
         "hashed_password": get_password_hash(payload.password),
         "role": role.value,
         "is_active": True,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.utcnow(),  # noqa: DTZ003
     }
     await db["users"].insert_one(user_doc)
 
@@ -66,7 +64,7 @@ async def register(
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: UserLogin, db: AsyncIOMotorDatabase = Depends(get_async_db)):
+async def login(payload: UserLogin, db: AsyncIOMotorDatabase = Depends(get_async_db)):  # noqa: B008
     email_lower = payload.email.lower()
     user_doc = await db["users"].find_one({"email": email_lower})
     if not user_doc:
@@ -96,5 +94,5 @@ async def login(payload: UserLogin, db: AsyncIOMotorDatabase = Depends(get_async
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: UserResponse = Depends(get_current_user)):
+async def get_me(current_user: UserResponse = Depends(get_current_user)):  # noqa: B008
     return current_user

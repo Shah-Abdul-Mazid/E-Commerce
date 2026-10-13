@@ -329,7 +329,7 @@ export const DashboardView: React.FC<Props> = ({
             <span className="text-rose-500 animate-pulse">❤️</span>
           </h2>
           <p className="text-xs text-rose-200/80 mt-1">
-            Welcome to SAMJAP Mart. Manage your AI subscriptions, transactions, and product catalog.
+            Welcome to EZOPY MART TECH. Manage your AI subscriptions, transactions, and product catalog.
           </p>
         </div>
 
@@ -678,7 +678,7 @@ export const DashboardView: React.FC<Props> = ({
                             onClick={() => {
                               setSelectedTrxForApproval(trx.id)
                               setCustomCreds(
-                                `Portal: https://cloud.samjap.mart\nAccount Key: SJ-${trx.order_id}\nExpires: 30 Days`
+                                `Provider: EZOPY MART TECH\nAccount Key: EZ-${trx.order_id}\nExpires: 30 Days`
                               )
                             }}
                             className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"

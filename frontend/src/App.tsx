@@ -966,7 +966,7 @@ export default function App() {
 
   const [products, setProducts] = useState<ExtendedProduct[]>(defaultCatalog)
   const [user, setUser] = useState<UserType | null>(null)
-  const [token, setToken] = useState<string | null>(localStorage.getItem('softmart_token'))
+  const [token, setToken] = useState<string | null>(localStorage.getItem('ezopy_token'))
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([])
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
@@ -984,7 +984,7 @@ export default function App() {
 
   // Multi-Language & i18n State
   const [language, setLanguage] = useState<Language>(() => {
-    return (localStorage.getItem('samjap_language') as Language) || 'en'
+    return (localStorage.getItem('ezopy_language') as Language) || 'en'
   })
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false)
 
@@ -1045,7 +1045,7 @@ export default function App() {
 
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang)
-    localStorage.setItem('samjap_language', lang)
+    localStorage.setItem('ezopy_language', lang)
     setIsLangMenuOpen(false)
   }
 
@@ -1061,7 +1061,7 @@ export default function App() {
   const [generatorAmount, setGeneratorAmount] = useState('599')
   const [generatorMode, setGeneratorMode] = useState<'FUND_TRANSFER' | 'BILL_PAYMENT'>('BILL_PAYMENT')
   const [generatorStudentId, setGeneratorStudentId] = useState('2022-1-60-019')
-  const [generatorBiller, setGeneratorBiller] = useState('University Tuition & Fees')
+  const [generatorBiller, setGeneratorBiller] = useState('EZOPY MART TECH')
 
   // Load backend products, token user, and check SSLCommerz return query params
   useEffect(() => {
@@ -1085,13 +1085,13 @@ export default function App() {
           id: tran_id,
           transaction_id: tran_id,
           memo_type: 'BILL_PAYMENT',
-          receiver_name: 'SAMJAP MART (MAZID & POPY)',
+          receiver_name: 'EZOPY MART TECH',
           receiver_bank: 'Dutch-Bangla Bank PLC',
           receiver_account: '107.110.198425',
           sender_card_type: card_type || 'VISA / MASTER / MFS',
           sender_card_number: 'SSL-GATEWAY-CARD',
           nexus_pay_id: val_id ? `VAL-${val_id.slice(-6)}` : 'SSL-VERIFIED',
-          biller_name: 'University Tuition & Fees',
+          biller_name: 'EZOPY MART TECH',
           biller_code: '8810',
           student_id: '2022-1-60-019',
           fee_bdt: 0.0,
@@ -1188,7 +1188,7 @@ export default function App() {
   const handleLoginSuccess = (newToken: string, newUser: UserType) => {
     setToken(newToken)
     setUser(newUser)
-    localStorage.setItem('softmart_token', newToken)
+    localStorage.setItem('ezopy_token', newToken)
     setShowAuthModal(false)
     setNotification(`Welcome back, ${newUser.full_name}!`)
     setTimeout(() => setNotification(null), 4000)
@@ -1198,7 +1198,7 @@ export default function App() {
   const handleLogout = () => {
     setToken(null)
     setUser(null)
-    localStorage.removeItem('softmart_token')
+    localStorage.removeItem('ezopy_token')
     setActiveView('store')
   }
 
@@ -1255,9 +1255,9 @@ export default function App() {
           product_name: `${cart.length} Course(s) (${primaryItem.title} & more)`,
           product_category: 'B.Sc. CSE Courses & Academic Subscriptions',
           customer: {
-            name: user?.full_name || 'Shah Abdul Mazid',
-            email: user?.email || 'mazid@samjap.mart',
-            phone: '01711223344',
+            name: user?.full_name || 'EZOPY MART TECH Customer',
+            email: user?.email || 'customer@ezopymart.tech',
+            phone: '01700000000',
             address: 'Dhaka, Bangladesh',
             city: 'Dhaka',
             country: 'Bangladesh',

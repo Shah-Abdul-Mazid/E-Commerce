@@ -1,18 +1,18 @@
 import os
 import uuid
-from datetime import datetime
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
+from app.api.v1.auth import router as auth_router
+from app.api.v1.checkout import router as checkout_router
+from app.api.v1.memos import router as memos_router
+from app.api.v1.products import router as products_router
 from app.core.config import settings
 from app.core.database import get_database, init_mongodb_indexes
 from app.core.security import get_password_hash
-from app.models.entities import UserRole, ProductType
-from app.api.v1.auth import router as auth_router
-from app.api.v1.products import router as products_router
-from app.api.v1.checkout import router as checkout_router
-from app.api.v1.memos import router as memos_router
+from app.models.entities import ProductType, UserRole
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 _db_initialized = False
 
@@ -75,13 +75,13 @@ async def seed_initial_data():
                     "hashed_password": hashed_pwd,
                     "role": role_val,
                     "is_active": True,
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.utcnow(),  # noqa: DTZ003
                 }
             )
 
     prod_count = await db["products"].count_documents({})
     if prod_count == 0:
-        now = datetime.utcnow()
+        now = datetime.utcnow()  # noqa: DTZ003
         catalog = [
             {
                 "id": str(uuid.uuid4()),

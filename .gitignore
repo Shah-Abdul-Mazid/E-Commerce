@@ -28,7 +28,7 @@ build/
 # Databases
 *.db
 *.sqlite3
-samjap_mart.db
+ezopy_mart.db
 
 # API & Editor
 .postman

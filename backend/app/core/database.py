@@ -1,11 +1,12 @@
 import asyncio
-from typing import Dict
+from typing import Dict  # noqa: UP035
+
+from app.core.config import settings
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from sqlalchemy.orm import DeclarativeBase
-from app.core.config import settings
 
 # Cache Motor clients by event loop ID so serverless (Vercel) and local uvicorn never hit closed-loop errors
-_clients_by_loop: Dict[int, AsyncIOMotorClient] = {}
+_clients_by_loop: Dict[int, AsyncIOMotorClient] = {}  # noqa: UP006
 
 
 class Base(DeclarativeBase):
@@ -33,7 +34,7 @@ def get_database() -> AsyncIOMotorDatabase:
     return get_motor_client()[settings.MONGODB_DB_NAME]
 
 
-async def get_async_db() -> AsyncIOMotorDatabase:
+async def get_async_db() -> AsyncIOMotorDatabase: # pyright: ignore[reportInvalidTypeForm]
     yield get_database()
 
 

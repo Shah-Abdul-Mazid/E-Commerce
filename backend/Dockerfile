@@ -1,4 +1,4 @@
-# SAMJAP Mart Backend Dockerfile for Render / Cloud Deployment
+# EZOPY MART TECH Backend Dockerfile for Render / Cloud Deployment
 FROM python:3.11-slim
 
 # Prevent Python from writing .pyc files & enable unbuffered logging

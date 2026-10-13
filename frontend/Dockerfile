@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for SAMJAP Mart Frontend (React + Vite)
+# Multi-stage Dockerfile for EZOPY MART TECH Frontend (React + Vite)
 # Stage 1: Build
 FROM node:20-alpine AS builder
 

@@ -37,28 +37,16 @@ A modern, full-stack e-commerce marketplace and academic learning platform. Buil
 
 ---
 
-## 🔑 Default Test Accounts & Credentials
+## 🔑 Accounts & Environment Configuration
 
-All accounts are auto-seeded into the database on startup with **Bcrypt-hashed passwords**:
+All default administrator and demo accounts, database URLs, and payment gateway keys are configured strictly via environment variables (`.env`) and are never hardcoded in the repository.
 
-### 👑 Administrators (Full Admin Control Panel Access)
-
-| Name | Email | Password | Role | Permissions |
-|---|---|---|---|---|
-| **System Administrator** | `admin@samjap.mart` | `Admin@123` | `ADMIN` | Manage products & prices, orders, verify transactions |
-| **Shah Abdul Mazid** | `mazid@samjap.mart` | `Mazid@123` | `ADMIN` | Full control: Add/Update/Delete products, pricing & store |
-| **Jannat Farhana Popy ❤️** | `popy@samjap.mart` | `Popy@123` | `ADMIN` | Full control: Add/Update/Delete products, pricing & store |
-
-### 👤 Demo Customers (Student & Subscriber Access)
-
-| Name | Email | Password | Role | Permissions |
-|---|---|---|---|---|
-| **Demo Customer 1** | `customer1@gmail.com` | `Customer@123` | `CUSTOMER` | Browse tools, enroll in CSE courses, SSL checkout |
-| **Demo Customer 2** | `customer2@yahoo.com` | `Customer@123` | `CUSTOMER` | Browse tools, enroll in CSE courses, SSL checkout |
-| **Demo Customer 3** | `customer3@outlook.com` | `Customer@123` | `CUSTOMER` | Browse tools, enroll in CSE courses, SSL checkout |
-
-> [!TIP]
-> **1-Click Quick Fill**: When opening the **Sign In** modal on the website, click any of the preset chips (`[admin]`, `[mazid]`, `[popy ❤️]`, `[customer1]`, `[customer2]`, `[customer3]`) to auto-fill the form instantly, and click the **Eye icon** to preview the password!
+### 👑 Administrators & Demo Accounts
+Configure the following variables in your `.env` (or Vercel Environment Variables):
+- `ADMIN_SYSTEM_EMAIL` / `ADMIN_SYSTEM_PASSWORD`
+- `ADMIN_PRIMARY_NAME` / `ADMIN_PRIMARY_EMAIL` / `ADMIN_PRIMARY_PASSWORD`
+- `ADMIN_SECONDARY_NAME` / `ADMIN_SECONDARY_EMAIL` / `ADMIN_SECONDARY_PASSWORD`
+- `DEMO_CUSTOMER_PASSWORD` (`DEMO_CUSTOMER_1_EMAIL`, `DEMO_CUSTOMER_2_EMAIL`, `DEMO_CUSTOMER_3_EMAIL`)
 
 ---
 

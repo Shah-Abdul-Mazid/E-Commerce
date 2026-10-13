@@ -7,12 +7,11 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
-      - DATABASE_URL=sqlite+aiosqlite:///./samjap_mart.db
+      - PROJECT_NAME=EZOPY MART TECH
       - APP_BASE_URL=http://localhost:8000
       - FRONTEND_URL=http://localhost:5174
-      - SSL_STORE_ID=jfpet6acc0a12e3919
-      - SSL_STORE_PASSWORD=jfpet6acc0a12e3919@ssl
-      - SSL_IS_LIVE=false
+    env_file:
+      - .env
     volumes:
       - backend_data:/app
 

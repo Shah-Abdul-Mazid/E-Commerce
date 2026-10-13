@@ -1,33 +1,35 @@
 import re
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from typing import List, Optional  # noqa: F401, UP035
 
-from app.core.database import get_async_db
-from app.core.deps import get_current_user, get_current_admin
 from app.core.config import settings
+from app.core.database import get_async_db
+from app.core.deps import get_current_admin, get_current_user
 from app.models.entities import (
-    TransactionStatus,
-    SubscriptionStatus,
     MemoType,
-    ProductType,
     PaymentMethod,
+    ProductType,
+    SubscriptionStatus,
+    TransactionStatus,
 )
 from app.schemas.all_schemas import (
     CheckoutSubmit,
-    TransactionResponse,
-    TransactionMemoResponse,
-    TransactionStatusUpdate,
     SubscriptionResponse,
+    TransactionMemoResponse,
+    TransactionResponse,
+    TransactionStatusUpdate,
     UserResponse,
 )
+from fastapi import APIRouter, Depends, HTTPException
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter(prefix="/checkout", tags=["Checkout & Subscriptions"])
 
 
-def _doc_to_memo_response(memo_doc: Optional[dict]) -> Optional[TransactionMemoResponse]:
+def _doc_to_memo_response(
+    memo_doc: dict | None,
+) -> TransactionMemoResponse | None:
     if not memo_doc:
         return None
     return TransactionMemoResponse(
@@ -51,7 +53,9 @@ def _doc_to_memo_response(memo_doc: Optional[dict]) -> Optional[TransactionMemoR
 
 
 async def _build_transaction_response(
-    db: AsyncIOMotorDatabase, trx_doc: dict, product_title_override: Optional[str] = None
+    db: AsyncIOMotorDatabase,
+    trx_doc: dict,
+    product_title_override: str | None = None,
 ) -> TransactionResponse:
     memo_doc = await db["transaction_memos"].find_one({"transaction_id": trx_doc["id"]})
     product_title = product_title_override or trx_doc.get("product_title")
@@ -71,8 +75,10 @@ async def _build_transaction_response(
         transaction_id=trx_doc["transaction_id"],
         sender_account=trx_doc.get("sender_account"),
         memo_type=MemoType(trx_doc.get("memo_type", MemoType.FUND_TRANSFER.value)),
-        status=TransactionStatus(trx_doc.get("status", TransactionStatus.VERIFIED.value)),
-        created_at=trx_doc.get("created_at", datetime.utcnow()),
+        status=TransactionStatus(
+            trx_doc.get("status", TransactionStatus.VERIFIED.value)
+        ),
+        created_at=trx_doc.get("created_at", datetime.utcnow()),  # noqa: DTZ003
         memo=_doc_to_memo_response(memo_doc),
     )
 
@@ -80,8 +86,8 @@ async def _build_transaction_response(
 @router.post("/submit", response_model=TransactionResponse)
 async def submit_checkout(
     payload: CheckoutSubmit,
-    db: AsyncIOMotorDatabase = Depends(get_async_db),
-    current_user: UserResponse = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
+    current_user: UserResponse = Depends(get_current_user),  # noqa: B008
 ):
     # 1. Fetch or Match Product in MongoDB
     product = await db["products"].find_one({"id": payload.product_id})
@@ -136,13 +142,13 @@ async def submit_checkout(
             ],
             "icon_name": "Zap",
             "is_active": True,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.utcnow(),  # noqa: DTZ003
         }
         await db["products"].insert_one(product)
 
-    order_id = f"SM-{uuid.uuid4().hex[:8].upper()}"
+    order_id = f"EZ-{uuid.uuid4().hex[:8].upper()}"
     now_str = datetime.now().strftime("%d-%b-%Y %I:%M:%S %p")
-    now_utc = datetime.utcnow()
+    now_utc = datetime.utcnow()  # noqa: DTZ003
     trx_uuid = str(uuid.uuid4())
 
     # 2. Record Transaction under the login user
@@ -199,8 +205,8 @@ async def submit_checkout(
 
     creds = (
         f"Product: {product['title']}\n"
-        f"Web Portal: https://cloud.samjap.mart\n"
-        f"License Token: SJ-VIP-{uuid.uuid4().hex[:10].upper()}\n"
+        f"Provider: EZOPY MART TECH\n"
+        f"License Token: EZ-VIP-{uuid.uuid4().hex[:10].upper()}\n"
         f"Authorized User: {current_user.email}\n"
         f"Access Status: ACTIVE • Direct Cloud & Extension Sync"
     )
@@ -228,15 +234,13 @@ async def submit_checkout(
     return await _build_transaction_response(db, trx_doc, product["title"])
 
 
-@router.get("/my-history", response_model=List[TransactionResponse])
+@router.get("/my-history", response_model=list[TransactionResponse])
 async def get_my_transactions(
-    db: AsyncIOMotorDatabase = Depends(get_async_db),
-    current_user: UserResponse = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
+    current_user: UserResponse = Depends(get_current_user),  # noqa: B008
 ):
     cursor = (
-        db["transactions"]
-        .find({"user_id": current_user.id})
-        .sort("created_at", -1)
+        db["transactions"].find({"user_id": current_user.id}).sort("created_at", -1)
     )
     docs = await cursor.to_list(length=500)
     output = []
@@ -245,10 +249,10 @@ async def get_my_transactions(
     return output
 
 
-@router.get("/all-transactions", response_model=List[TransactionResponse])
+@router.get("/all-transactions", response_model=list[TransactionResponse])
 async def get_all_transactions(
-    db: AsyncIOMotorDatabase = Depends(get_async_db),
-    admin: UserResponse = Depends(get_current_admin),
+    db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
+    admin: UserResponse = Depends(get_current_admin),  # noqa: B008
 ):
     cursor = db["transactions"].find({}).sort("created_at", -1)
     docs = await cursor.to_list(length=1000)
@@ -262,8 +266,8 @@ async def get_all_transactions(
 async def update_transaction_status(
     trx_id: str,
     payload: TransactionStatusUpdate,
-    db: AsyncIOMotorDatabase = Depends(get_async_db),
-    admin: UserResponse = Depends(get_current_admin),
+    db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
+    admin: UserResponse = Depends(get_current_admin),  # noqa: B008
 ):
     trx_doc = await db["transactions"].find_one(
         {
@@ -291,11 +295,11 @@ async def update_transaction_status(
             }
         )
         creds = payload.access_credentials or (
-            f"Portal Login: https://cloud.samjap.mart\n"
-            f"Access Key: SJ-KEY-{uuid.uuid4().hex[:12].upper()}\n"
+            f"Provider: EZOPY MART TECH\n"
+            f"Access Key: EZ-KEY-{uuid.uuid4().hex[:12].upper()}\n"
             f"Auto-Refreshed Cookies Included."
         )
-        now = datetime.utcnow()
+        now = datetime.utcnow()  # noqa: DTZ003
         if existing_sub:
             new_end = existing_sub.get("end_date", now) + timedelta(days=30)
             await db["subscriptions"].update_one(
@@ -318,19 +322,15 @@ async def update_transaction_status(
     return await _build_transaction_response(db, trx_doc)
 
 
-@router.get("/my-subscriptions", response_model=List[SubscriptionResponse])
+@router.get("/my-subscriptions", response_model=list[SubscriptionResponse])
 async def get_my_subscriptions(
-    db: AsyncIOMotorDatabase = Depends(get_async_db),
-    current_user: UserResponse = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
+    current_user: UserResponse = Depends(get_current_user),  # noqa: B008
 ):
-    cursor = (
-        db["subscriptions"]
-        .find({"user_id": current_user.id})
-        .sort("end_date", -1)
-    )
+    cursor = db["subscriptions"].find({"user_id": current_user.id}).sort("end_date", -1)
     subs = await cursor.to_list(length=500)
 
-    now = datetime.utcnow()
+    now = datetime.utcnow()  # noqa: DTZ003
     output = []
     for s in subs:
         title = s.get("product_title")
