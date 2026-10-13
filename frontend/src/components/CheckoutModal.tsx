@@ -10,8 +10,7 @@ interface Props {
   onRequireLogin: () => void
 }
 
-const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || ''
 
 export const CheckoutModal: React.FC<Props> = ({
   product,
@@ -24,15 +23,15 @@ export const CheckoutModal: React.FC<Props> = ({
   const [memoType, setMemoType] = useState<MemoType>('FUND_TRANSFER')
   const [trxId, setTrxId] = useState('')
   const [senderAccount, setSenderAccount] = useState('')
-  const [studentId, setStudentId] = useState('2022-1-60-019')
+  const [studentId, setStudentId] = useState('')
   const [billerName, setBillerName] = useState(product.title)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Customer info for SSLCommerz session
-  const [customerName, setCustomerName] = useState('Shah Abdul Mazid')
-  const [customerEmail, setCustomerEmail] = useState('mazid@samjap.mart')
-  const [customerPhone, setCustomerPhone] = useState('01711223344')
+  const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
 
   const paymentGuides = {
     SSLCOMMERZ: {

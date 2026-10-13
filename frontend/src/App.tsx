@@ -45,8 +45,7 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: typeof Sun; desc: s
   { mode: 'auto', label: 'Auto', icon: Laptop, desc: 'System settings appearance' },
 ]
 
-const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || ''
 
 interface CartItem {
   product: Product

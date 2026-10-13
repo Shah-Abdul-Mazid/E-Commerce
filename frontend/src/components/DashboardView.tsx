@@ -33,8 +33,7 @@ interface Props {
   onUpdateStatus: (trxId: string, status: string, creds?: string) => void
 }
 
-const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || ''
 
 export const DashboardView: React.FC<Props> = ({
   user,

@@ -1,89 +1,100 @@
+import os
+import uuid
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.database import get_async_db
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.core.deps import get_current_user
-from app.models.entities import User, UserRole
+from app.models.entities import UserRole
 from app.schemas.all_schemas import UserRegister, UserLogin, UserResponse, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
+def _get_admin_emails() -> set:
+    emails = {
+        os.getenv("ADMIN_EMAIL", "").lower(),
+        os.getenv("MAZID_EMAIL", "").lower(),
+        os.getenv("POPY_EMAIL", "").lower(),
+    }
+    emails.discard("")
+    return emails
+
+
 @router.post("/register", response_model=TokenResponse)
-async def register(payload: UserRegister, db: AsyncSession = Depends(get_async_db)):
-    # Check if email exists
-    result = await db.execute(select(User).where(User.email == payload.email.lower()))
-    if result.scalar_one_or_none():
+async def register(
+    payload: UserRegister, db: AsyncIOMotorDatabase = Depends(get_async_db)
+):
+    email_lower = payload.email.lower()
+    existing = await db["users"].find_one({"email": email_lower})
+    if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A user with this email address already exists."
+            detail="A user with this email address already exists.",
         )
 
-    # Specific admin emails get ADMIN role automatically
-    admin_emails = {"admin@samjap.mart", "mazid@samjap.mart", "popy@samjap.mart"}
-    role = UserRole.ADMIN if payload.email.lower() in admin_emails else UserRole.CUSTOMER
+    role = (
+        UserRole.ADMIN
+        if email_lower in _get_admin_emails()
+        else UserRole.CUSTOMER
+    )
 
-    new_user = User(
-        email=payload.email.lower(),
-        full_name=payload.full_name,
-        phone_number=payload.phone_number,
-        hashed_password=get_password_hash(payload.password),
+    user_doc = {
+        "id": str(uuid.uuid4()),
+        "email": email_lower,
+        "full_name": payload.full_name,
+        "phone_number": payload.phone_number,
+        "hashed_password": get_password_hash(payload.password),
+        "role": role.value,
+        "is_active": True,
+        "created_at": datetime.utcnow(),
+    }
+    await db["users"].insert_one(user_doc)
+
+    user_resp = UserResponse(
+        id=user_doc["id"],
+        email=user_doc["email"],
+        full_name=user_doc["full_name"],
+        phone_number=user_doc["phone_number"],
         role=role,
+        is_active=user_doc["is_active"],
+        created_at=user_doc["created_at"],
     )
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
+    token = create_access_token(user_doc["id"])
+    return TokenResponse(access_token=token, token_type="bearer", user=user_resp)
 
-    token = create_access_token(new_user.id)
-    return TokenResponse(
-        access_token=token,
-        token_type="bearer",
-        user=UserResponse.model_validate(new_user)
-    )
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: UserLogin, db: AsyncSession = Depends(get_async_db)):
-    result = await db.execute(select(User).where(User.email == payload.email.lower()))
-    user = result.scalar_one_or_none()
-    if not user:
+async def login(payload: UserLogin, db: AsyncIOMotorDatabase = Depends(get_async_db)):
+    email_lower = payload.email.lower()
+    user_doc = await db["users"].find_one({"email": email_lower})
+    if not user_doc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password."
+            detail="Incorrect email or password.",
         )
 
-    # Verify bcrypt hashed password
-    is_valid = verify_password(payload.password, user.hashed_password)
-    if not is_valid:
-        # Fallback convenience for demo/admin accounts
-        fallback_passwords = {
-            "admin@samjap.mart": ["Admin@123", "admin123", "Admin2026!"],
-            "mazid@samjap.mart": ["Mazid@123", "MazidLovesPopy2026", "Admin@123"],
-            "popy@samjap.mart": ["Popy@123", "PopyLovesMazid123", "Admin@123"],
-            "customer1@gmail.com": ["Customer@123", "123456", "customer123"],
-            "customer2@yahoo.com": ["Customer@123", "123456", "customer123"],
-            "customer3@outlook.com": ["Customer@123", "123456", "customer123"],
-        }
-        email_key = payload.email.lower()
-        if email_key in fallback_passwords and payload.password in fallback_passwords[email_key]:
-            is_valid = True
-            # Rehash with current typed password and save
-            user.hashed_password = get_password_hash(payload.password)
-            await db.commit()
-
+    is_valid = verify_password(payload.password, user_doc["hashed_password"])
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password."
+            detail="Incorrect email or password.",
         )
 
-    token = create_access_token(user.id)
-    return TokenResponse(
-        access_token=token,
-        token_type="bearer",
-        user=UserResponse.model_validate(user)
+    user_resp = UserResponse(
+        id=user_doc["id"],
+        email=user_doc["email"],
+        full_name=user_doc["full_name"],
+        phone_number=user_doc.get("phone_number"),
+        role=UserRole(user_doc.get("role", UserRole.CUSTOMER.value)),
+        is_active=user_doc.get("is_active", True),
+        created_at=user_doc["created_at"],
     )
+    token = create_access_token(user_doc["id"])
+    return TokenResponse(access_token=token, token_type="bearer", user=user_resp)
+
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user)):
-    return UserResponse.model_validate(current_user)
+async def get_me(current_user: UserResponse = Depends(get_current_user)):
+    return current_user

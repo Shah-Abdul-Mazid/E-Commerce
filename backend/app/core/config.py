@@ -1,44 +1,69 @@
 import os
+from pathlib import Path
 from typing import List
+from urllib.parse import quote_plus, unquote
+from dotenv import load_dotenv
+
+# Load backend/.env and root .env if present
+_backend_dir = Path(__file__).resolve().parents[2]
+load_dotenv(_backend_dir / ".env")
+load_dotenv(_backend_dir.parent / ".env")
+
+
+def sanitize_mongodb_uri(raw_uri: str) -> str:
+    """
+    Safely URL-encode username and password in a MongoDB connection URI
+    even when the password contains special characters like '@' or '$'.
+    """
+    uri = raw_uri.strip()
+    if not (uri.startswith("mongodb://") or uri.startswith("mongodb+srv://")):
+        return uri
+
+    scheme, rest = uri.split("://", 1)
+    if "@" not in rest:
+        return uri
+
+    # Split on the LAST '@' because the host part never contains '@'
+    creds, host_part = rest.rsplit("@", 1)
+    if ":" not in creds:
+        return f"{scheme}://{quote_plus(unquote(creds))}@{host_part}"
+
+    user, pwd = creds.split(":", 1)
+    encoded_user = quote_plus(unquote(user))
+    encoded_pwd = quote_plus(unquote(pwd))
+    return f"{scheme}://{encoded_user}:{encoded_pwd}@{host_part}"
 
 
 class Settings:
-    PROJECT_NAME: str = "SAMJAP Mart — Shah Abdul Mazid ❤️ Jannat Farhana Popy"
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "EZOPY MART TECH")
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = os.getenv(
-        "SECRET_KEY", "samjap-mart-mazid-loves-popy-romantic-secret-key-2026"
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+    ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
+        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7))
     )
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    # Database URL: Supports PostgreSQL (asyncpg) or SQLite (aiosqlite) as default fallback
-    # On Vercel serverless functions, /var/task is read-only so default SQLite uses /tmp
-    _default_sqlite_url: str = (
-        "sqlite+aiosqlite:////tmp/samjap_mart.db"
-        if os.getenv("VERCEL")
-        else "sqlite+aiosqlite:///./samjap_mart.db"
+    # MongoDB Atlas Connection URI read strictly from environment (.env)
+    _raw_mongo_uri: str = (
+        os.getenv("MONGODB_DATABASE")
+        or os.getenv("MONGODB_URI")
+        or os.getenv("MONGO_URI")
+        or os.getenv("DATABASE_URL")
+        or ""
     )
-    _raw_db_url: str = os.getenv("DATABASE_URL", _default_sqlite_url)
-    if _raw_db_url.startswith("postgres://"):
-        DATABASE_URL: str = _raw_db_url.replace("postgres://", "postgresql+asyncpg://", 1)
-    elif _raw_db_url.startswith("postgresql://") and not _raw_db_url.startswith("postgresql+asyncpg://"):
-        DATABASE_URL: str = _raw_db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    else:
-        DATABASE_URL: str = _raw_db_url
+    MONGODB_URI: str = sanitize_mongodb_uri(_raw_mongo_uri)
+    MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "EcommarceDB")
 
-    # Dutch-Bangla Bank & Payment Settings
-    DBBL_RECEIVER_NAME: str = os.getenv(
-        "DBBL_RECEIVER_NAME", "SAMJAP MART (MAZID & POPY)"
-    )
-    DBBL_RECEIVER_BANK: str = "Dutch-Bangla Bank PLC"
-    DBBL_RECEIVER_ACCOUNT: str = os.getenv("DBBL_RECEIVER_ACCOUNT", "107.110.198425")
+    # Payment & Receiver Settings from environment (.env)
+    DBBL_RECEIVER_NAME: str = os.getenv("DBBL_RECEIVER_NAME", "EZOPY MART TECH")
+    DBBL_RECEIVER_BANK: str = os.getenv("DBBL_RECEIVER_BANK", "Dutch-Bangla Bank PLC")
+    DBBL_RECEIVER_ACCOUNT: str = os.getenv("DBBL_RECEIVER_ACCOUNT", "")
 
-    # CORS
+    # CORS Origins from environment (.env)
     BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:3000",
-        "*",
+        origin.strip()
+        for origin in os.getenv("BACKEND_CORS_ORIGINS", "*").split(",")
+        if origin.strip()
     ]
 
 
