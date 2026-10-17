@@ -1,117 +1,202 @@
 # 🚀 Deployment Guide: EZOPY MART TECH
 
-This guide details how to deploy **EZOPY MART TECH** to production:
-- **Backend (FastAPI + SSLCommerz + Uvicorn)** on [Vercel](https://vercel.com) or [Render.com](https://render.com)
-- **Frontend (React 19 + TypeScript + Vite + Tailwind CSS)** on [Vercel](https://vercel.com) with **`vercel.json`**
+This guide provides complete, step-by-step instructions for deploying **EZOPY MART TECH** to production. You can choose whichever setup suits your workflow best:
+
+* **[Option 1: All-in-One Vercel Deployment (Frontend & Backend Both on Vercel)](#option-1-all-in-one-vercel-deployment-frontend--backend-both-on-vercel)** — *Recommended for simplicity: single domain, unified CI/CD, 0 CORS issues.*
+* **[Option 2: Split Cloud Deployment (Frontend on Vercel + Backend on Render)](#option-2-split-cloud-deployment-frontend-on-vercel--backend-on-render)** — *Recommended for dedicated Docker container hosting on Render.*
+* **[Option 3: Local Docker Compose (All-in-One Local Test)](#option-3-local-docker-compose-all-in-one-local-test)** — *1-command local development.*
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture Options
 
 ```mermaid
-flowchart LR
-    User[User Browser]
-    Vercel["Frontend on Vercel<br/>(React + Vite SPA)"]
-    Render["Backend on Vercel / Render<br/>(FastAPI Service)"]
-    SSL["SSLCommerz Gateway<br/>(Sandbox / Live)"]
-    DB[(Database<br/>MongoDB Atlas)]
+flowchart TD
+    subgraph Option1["Option 1: All-in-One on Vercel (vercel.json)"]
+        User1["User Browser"] -->|HTTPS requests| VercelEdge["Vercel Global Edge Gateway"]
+        VercelEdge -->|/(.*) SPA routing| VercelFrontend["Vite 8 + React 19 Frontend"]
+        VercelEdge -->|/api/(.*) rewrites| VercelBackend["FastAPI Python Backend (Serverless/Microservice)"]
+        VercelBackend --> MongoDB1[("MongoDB Atlas Cloud DB")]
+        VercelBackend <--> SSL1["SSLCommerz Sandbox/Live Gateway"]
+    end
 
-    User -->|Visits UI| Vercel
-    Vercel -->|API Requests with VITE_BACKEND_URL| Render
-    Render -->|Initiates Payment| SSL
-    SSL -->|Callback to APP_BASE_URL| Render
-    Render -->|Redirects with Token| Vercel
-    Render -->|Queries/Updates| DB
+    subgraph Option2["Option 2: Split Cloud (Vercel + Render)"]
+        User2["User Browser"] -->|Visits UI| VercelSPA["Frontend on Vercel (React + Vite)"]
+        VercelSPA -->|API via VITE_BACKEND_URL| RenderDocker["Backend on Render (Docker Container)"]
+        RenderDocker --> MongoDB2[("MongoDB Atlas Cloud DB")]
+        RenderDocker <--> SSL2["SSLCommerz Sandbox/Live Gateway"]
+    end
 ```
 
 ---
 
-## Part 1: Deploy Backend to Render (render.com)
+## Option 1: All-in-One Vercel Deployment (Frontend & Backend Both on Vercel)
 
-Render builds and runs your container using the `backend/Dockerfile`.
+The repository includes a root **[`vercel.json`](file:///c:/Users/LENOVO/Desktop/E-Commerce/vercel.json)** configuration file that manages both the React frontend and FastAPI backend as microservices under a single Vercel project with unified routing.
 
-### Step 1: Create a New Web Service on Render
-1. Log in to [dashboard.render.com](https://dashboard.render.com).
-2. Click **New +** → **Web Service**.
-3. Connect your GitHub/GitLab repository containing this project.
-4. Set the following settings:
-   - **Name**: `ezopy-mart-tech-backend` (or your preferred name)
-   - **Region**: Choose closest (e.g., *Singapore* or *Frankfurt*)
-   - **Root Directory**: `backend` *(Important: set this so Render builds from inside the backend folder)*
-   - **Runtime**: **Docker** (Render will automatically detect `backend/Dockerfile`)
-   - **Instance Type**: **Free** or **Starter**
+### How It Works:
+- **Frontend Service**: React 19 + TypeScript + Vite 8, builds to `dist/`, routes all SPA requests to `/index.html`.
+- **Backend Service**: FastAPI Python 3.11+ application pointing to `main:app`.
+- **Unified Routing**:
+  - `/api/(.*)` rewrites directly to the FastAPI backend service.
+  - `/(.*)` rewrites to the Vite frontend SPA.
+- **Benefits**: Single domain (e.g. `https://ezopy-mart.vercel.app`), zero CORS configuration issues, unified Git deployments, and no monthly fees for separate container hosting.
 
-### Step 2: Configure Environment Variables on Render
-Under **Environment Variables**, add the following:
+### Step-by-Step Deployment:
 
-| Key | Value | Description |
+#### Step 1: Push Repository to GitHub
+Ensure your latest code is pushed to your GitHub repository:
+```bash
+git push origin master
+```
+
+#### Step 2: Import Project on Vercel
+1. Log in to [vercel.com](https://vercel.com).
+2. Click **Add New...** → **Project**.
+3. Select and import your GitHub repository (`E-Commerce`).
+4. **Project Settings**:
+   - **Root Directory**: Leave as `./` (the root directory, so Vercel reads the root `vercel.json`).
+   - Do **NOT** override the Build Command or Output Directory; Vercel will read them directly from `vercel.json`.
+
+#### Step 3: Configure Environment Variables on Vercel
+Under the **Environment Variables** section in Vercel, add the following keys:
+
+| Key | Example Value | Description |
 |---|---|---|
-| `PORT` | `8000` | Port for Uvicorn (Render sets this dynamically, Dockerfile supports `${PORT:-8000}`) |
-| `PROJECT_NAME` | `EZOPY MART TECH` | Application name |
-| `SECRET_KEY` | *(Generate a 32+ char random string)* | JWT encryption key |
-| `APP_BASE_URL` | `https://ezopy-mart-tech-backend.onrender.com` | Your Render public backend URL (no trailing slash) |
-| `FRONTEND_URL` | `https://ezopy-mart-tech.vercel.app` | Your Vercel frontend URL (no trailing slash) |
-| `SSL_STORE_ID` | *(Your SSLCommerz Store ID)* | SSLCommerz Store ID (sandbox or live) |
-| `SSL_STORE_PASSWORD` | *(Your SSLCommerz Store Password)* | SSLCommerz Store Password |
-| `SSL_IS_LIVE` | `false` | `false` for Sandbox, `true` for Live |
-| `MONGODB_DATABASE` | *(Your MongoDB Atlas SRV URI)* | MongoDB Atlas connection string |
+| `PROJECT_NAME` | `EZOPY MART TECH` | Project display name |
+| `SECRET_KEY` | *(32+ character random string)* | JWT encryption key |
+| `APP_BASE_URL` | `https://your-project.vercel.app` | Your live Vercel domain (no trailing slash) |
+| `FRONTEND_URL` | `https://your-project.vercel.app` | Your live Vercel domain (no trailing slash) |
+| `SSL_STORE_ID` | `samja695287` *(or your Store ID)* | SSLCommerz Store ID |
+| `SSL_STORE_PASSWORD` | *(Your Store Password)* | SSLCommerz Store Password |
+| `SSL_IS_LIVE` | `false` | `false` for Sandbox, `true` for Production |
+| `MONGODB_DATABASE` | `mongodb+srv://...` | MongoDB Atlas SRV connection string |
 
-### Step 3: Deploy
-- Click **Create Web Service**.
-- Wait for Render to build the Docker image and start the container.
-- Test your backend by visiting: `https://<your-backend-slug>.onrender.com/docs` to see the interactive Swagger API documentation.
+*(Note: `VITE_BACKEND_URL` can be left empty in Option 1 because Vercel automatically routes `/api/*` to the FastAPI backend service).*
+
+#### Step 4: Click Deploy
+- Click **Deploy**.
+- Vercel builds the frontend bundle and provisions the Python backend service.
+- Once finished, test:
+  - **Frontend UI**: `https://your-project.vercel.app`
+  - **Interactive Swagger API Docs**: `https://your-project.vercel.app/api/docs`
 
 ---
 
-## Part 2: Deploy Frontend to Vercel (vercel.com)
+## Option 2: Split Cloud Deployment (Frontend on Vercel + Backend on Render)
 
-Vercel is the optimal host for React/Vite single-page applications. It builds the static assets and distributes them across its global Edge CDN.
+In this architecture, your Python backend runs as a persistent Docker container on Render.com, while your React frontend runs as a static SPA on Vercel's global CDN.
 
-### Step 1: Import Project into Vercel
+### Step-by-Step Deployment:
+
+### Part 2A: Deploy Backend to Render.com
+
+#### 1. Create a New Web Service on Render
+1. Log in to [dashboard.render.com](https://dashboard.render.com).
+2. Click **New +** → **Web Service**.
+3. Connect your GitHub repository.
+4. Set the following settings:
+   - **Name**: `ezopy-mart-tech-backend` (or your choice)
+   - **Region**: Singapore or Frankfurt
+   - **Root Directory**: `backend` *(Crucial: set to `backend` so Render builds from the backend folder)*
+   - **Runtime**: **Docker** (Render will detect `backend/Dockerfile`)
+   - **Instance Type**: **Free** or **Starter**
+
+#### 2. Configure Environment Variables on Render
+Under **Environment Variables**, add:
+
+| Key | Value | Description |
+|---|---|---|
+| `PORT` | `8000` | Port for Uvicorn (Render dynamically binds this) |
+| `PROJECT_NAME` | `EZOPY MART TECH` | Application name |
+| `SECRET_KEY` | *(32+ character random string)* | JWT encryption key |
+| `APP_BASE_URL` | `https://ezopy-mart-tech-backend.onrender.com` | Your Render public backend URL (no trailing slash) |
+| `FRONTEND_URL` | `https://your-project.vercel.app` | Your Vercel frontend URL (no trailing slash) |
+| `SSL_STORE_ID` | *(Your Store ID)* | SSLCommerz Store ID |
+| `SSL_STORE_PASSWORD` | *(Your Store Password)* | SSLCommerz Store Password |
+| `SSL_IS_LIVE` | `false` | `false` for Sandbox, `true` for Live |
+| `MONGODB_DATABASE` | `mongodb+srv://...` | MongoDB Atlas SRV connection string |
+
+#### 3. Deploy Backend
+- Click **Create Web Service**.
+- Wait for Render to build the Docker image and deploy.
+- Verify by visiting: `https://<your-backend>.onrender.com/docs` to see the interactive Swagger API documentation.
+
+---
+
+### Part 2B: Deploy Frontend to Vercel.com
+
+#### 1. Import Project on Vercel
 1. Log in to [vercel.com](https://vercel.com).
 2. Click **Add New...** → **Project**.
 3. Import your GitHub repository.
-4. In the configuration screen:
-   - **Root Directory**: Click **Edit** and select `frontend` (or keep root `/` for unified `vercel.json` Services deployment)
-   - **Framework Preset**: **Vite** (auto-detected)
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
+4. **Project Settings**:
+   - **Root Directory**: Click **Edit** and choose `frontend`.
+   - **Framework Preset**: **Vite** (auto-detected).
+   - **Build Command**: `npm run build`.
+   - **Output Directory**: `dist`.
 
-### Step 2: Set Environment Variables on Vercel
-Before clicking Deploy, expand **Environment Variables** and add:
+#### 2. Configure Environment Variables on Vercel
+Under **Environment Variables**, add:
 
 | Key | Value | Description |
 |---|---|---|
-| `VITE_BACKEND_URL` | `https://ezopy-mart-tech-backend.onrender.com` | Your live backend URL (or leave empty for unified Vercel Services) |
+| `VITE_BACKEND_URL` | `https://<your-backend>.onrender.com` | Your live Render backend URL (no trailing slash) |
 
-### Step 3: Deploy
+#### 3. Deploy Frontend
 - Click **Deploy**.
-- Vercel will install dependencies, execute `npm run build`, and deploy your SPA in seconds.
-- The included `frontend/vercel.json` ensures that client-side routing rewrites all paths back to `/index.html` seamlessly.
+- The `frontend/vercel.json` file ensures that all client-side routes (SPA) rewrite to `/index.html`.
 
 ---
 
-## Part 3: Connect Frontend & Backend
-
-Once both are deployed:
-1. Update `FRONTEND_URL` on Render with your actual Vercel domain (e.g. `https://ezopy-mart-tech.vercel.app`).
-2. Update `VITE_BACKEND_URL` on Vercel if your Render domain changed, then trigger a redeploy on Vercel (env vars are bundled at Vite build time).
-3. Test the flow:
-   - Browse CSE courses & AI tools
-   - Test language switcher (Bangla, English, Hindi, German, Finnish, etc.)
-   - Test checkout with SSLCommerz Sandbox (redirects to SSLCommerz and returns to Vercel dashboard with transaction receipt)
+### Part 2C: Connect & Sync Both Services
+1. Once your Vercel frontend is live, copy its domain (e.g., `https://ezopy-mart.vercel.app`).
+2. Go to **Render Dashboard** → Your Web Service → **Environment Variables**:
+   - Update `FRONTEND_URL` to your live Vercel URL.
+   - Click **Save Changes** (Render will automatically redeploy).
+3. Verify that `VITE_BACKEND_URL` on Vercel points to your live Render backend URL.
 
 ---
 
-## Part 4: Local Docker Run (Optional)
+## Option 3: Local Docker Compose (All-in-One Local Test)
 
-To test the entire stack with Docker locally on your machine:
+To test the entire full-stack application locally in isolated containers:
 
 ```bash
-# Build and run both backend and frontend together
-docker compose up --build
+# 1. Clone the repository
+git clone https://github.com/Shah-Abdul-Mazid/E-Commerce.git
+cd E-Commerce
 
-# Open in browser:
-# Frontend: http://localhost:5174
-# Backend:  http://localhost:8000/docs
+# 2. Build and run containers
+docker compose up --build
 ```
+
+- **Frontend Application**: [http://localhost:5174](http://localhost:5174)
+- **Backend Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **FastAPI Root**: [http://localhost:8000/](http://localhost:8000/)
+
+---
+
+## ✅ Post-Deployment Verification Checklist
+
+Once deployed with either option, verify these key workflows:
+
+1. **Product Browsing**:
+   - Education courses (B.Sc. CSE curriculum) and AI packages load correctly.
+2. **Pre-Checkout Auth Gating**:
+   - Clicking **Buy Now** when logged out prompts you to Sign In or Register.
+   - Upon login, checkout modal opens automatically for the selected item.
+3. **Database Profile Auto-Fill**:
+   - Customer Name, Email, and Phone number automatically populate and lock in the checkout modal.
+4. **SSLCommerz Payment Callback**:
+   - Completing a sandbox test payment redirects back to your dashboard with real-time verification and auto-refreshing subscriptions without requiring a manual browser reload.
+5. **Customer Support & Footer**:
+   - Contact numbers (`01531329222`, `01560024587`), WhatsApp button (`+8801531329222`), and email links operate cleanly.
+
+---
+
+## 📄 License & Credits
+- **Brand**: EZOPY MART TECH
+- **Curated & Developed by**: Shah Abdul Mazid
+- **Dedicated with warmth to**: Jannat Farhana Popy
+- All rights reserved.

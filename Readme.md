@@ -142,24 +142,67 @@ docker compose up --build
 
 ---
 
-## 🌐 Production Deployment Summary
+## 🌐 Production Deployment Options
 
-For full details, see the dedicated [DEPLOYMENT.md](file:///c:/Users/LENOVO/Desktop/E-Commerce/DEPLOYMENT.md) guide.
+You can deploy **EZOPY MART TECH** using either of the following production setups. For complete details, variable tables, and architecture diagrams, check the dedicated [DEPLOYMENT.md](file:///c:/Users/LENOVO/Desktop/E-Commerce/DEPLOYMENT.md) guide.
 
-### Option A: Monorepo Full-Stack on Vercel (`vercel.json`)
-Deploy the entire monorepo with both frontend and backend on Vercel:
-- **Root `vercel.json`**: Manages microservices for both the React/Vite frontend and FastAPI backend.
-- **Routing**: Rewrites `/api/(.*)` to the FastAPI backend service and `/(.*)` to the Vite frontend SPA.
-- **Environment Variables**: Configure `MONGODB_URL` / `DATABASE_URL`, `SSL_STORE_ID`, `SSL_STORE_PASSWORD`, and JWT secrets in the Vercel Project Settings.
+### 🌟 Option 1: All-in-One Full-Stack on Vercel (Frontend & Backend Both on Vercel)
+*Recommended for simplicity: single domain, unified Git CI/CD, and 0 CORS setup.*
 
-### Option B: Split Cloud Architecture (Render + Vercel)
-1. **Backend on Render.com**:
-   - Web Service pointing to `backend/` directory using `backend/Dockerfile`.
-   - Dynamic `$PORT` handling and auto-converted database connections.
-   - Env vars: `APP_BASE_URL`, `FRONTEND_URL`, `SSL_STORE_ID`, `SSL_STORE_PASSWORD`, `DATABASE_URL`.
-2. **Frontend on Vercel.com**:
-   - Vite project pointing to `frontend/` directory with client-side routing rewrites.
-   - Env var: `VITE_BACKEND_URL=https://<your-render-backend-url>.onrender.com`.
+1. **Architecture**:
+   - The root **[`vercel.json`](file:///c:/Users/LENOVO/Desktop/E-Commerce/vercel.json)** orchestrates both the Vite frontend (`root: "frontend"`) and FastAPI backend (`root: "backend"`) as microservices.
+   - All `/api/(.*)` requests automatically route to the FastAPI backend service.
+   - All `/(.*)` requests route to the Vite single-page application.
+2. **Steps to Deploy**:
+   - Push your code to GitHub.
+   - Log in to [Vercel](https://vercel.com) → **Add New...** → **Project** → Import your repository.
+   - Keep **Root Directory** as `./` (Root) so Vercel reads the root `vercel.json`.
+   - Add Environment Variables in Vercel Project Settings:
+     - `PROJECT_NAME`: `EZOPY MART TECH`
+     - `SECRET_KEY`: *(32+ character random string)*
+     - `APP_BASE_URL`: `https://your-domain.vercel.app`
+     - `FRONTEND_URL`: `https://your-domain.vercel.app`
+     - `SSL_STORE_ID`: *(Your SSLCommerz Store ID)*
+     - `SSL_STORE_PASSWORD`: *(Your SSLCommerz Store Password)*
+     - `SSL_IS_LIVE`: `false` (for Sandbox) or `true` (for Production)
+     - `MONGODB_DATABASE`: *(Your MongoDB Atlas connection URI)*
+   - Click **Deploy**. Vercel will build both services and serve them under your unified domain.
+
+---
+
+### 🚀 Option 2: Split Cloud Architecture (Frontend on Vercel + Backend on Render)
+*Recommended for dedicated container scaling and persistent Python Docker runtime.*
+
+1. **Step 1: Deploy Backend to Render.com**:
+   - Log in to [Render Dashboard](https://dashboard.render.com) → **New +** → **Web Service**.
+   - Connect your GitHub repository.
+   - Set **Root Directory** to `backend` and **Runtime** to **Docker** (Render detects `backend/Dockerfile`).
+   - Add Environment Variables:
+     - `PORT`: `8000`
+     - `PROJECT_NAME`: `EZOPY MART TECH`
+     - `SECRET_KEY`: *(32+ character random string)*
+     - `APP_BASE_URL`: `https://<your-backend>.onrender.com`
+     - `FRONTEND_URL`: `https://<your-frontend>.vercel.app`
+     - `SSL_STORE_ID`, `SSL_STORE_PASSWORD`, `SSL_IS_LIVE`, `MONGODB_DATABASE`
+   - Click **Create Web Service**. Once built, copy your public backend URL.
+2. **Step 2: Deploy Frontend to Vercel.com**:
+   - Log in to [Vercel](https://vercel.com) → **Add New...** → **Project** → Import repository.
+   - Set **Root Directory** to `frontend`.
+   - Add Environment Variable:
+     - `VITE_BACKEND_URL`: `https://<your-backend>.onrender.com`
+   - Click **Deploy** (Vercel uses `frontend/vercel.json` for SPA rewrites).
+3. **Step 3: Connect & Sync**:
+   - Update `FRONTEND_URL` on Render to your newly generated Vercel domain.
+
+---
+
+### 🐳 Option 3: Local 1-Command Full-Stack with Docker Compose
+To run both backend and frontend together on your local machine:
+```bash
+docker compose up --build
+```
+- **Frontend Store**: [http://localhost:5174](http://localhost:5174)
+- **Backend API & Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
