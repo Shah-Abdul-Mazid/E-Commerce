@@ -13,18 +13,18 @@ This guide provides complete, step-by-step instructions for deploying **EZOPY MA
 ```mermaid
 flowchart TD
     subgraph Option1["Option 1: All-in-One on Vercel (vercel.json)"]
-        User1["User Browser"] -->|HTTPS requests| VercelEdge["Vercel Global Edge Gateway"]
-        VercelEdge -->|/(.*) SPA routing| VercelFrontend["Vite 8 + React 19 Frontend"]
-        VercelEdge -->|/api/(.*) rewrites| VercelBackend["FastAPI Python Backend (Serverless/Microservice)"]
+        User1["User Browser"] -->|"HTTPS Requests"| VercelEdge["Vercel Global Edge Gateway"]
+        VercelEdge -->|"SPA Routes (/*)"| VercelFrontend["Vite 8 + React 19 Frontend"]
+        VercelEdge -->|"API Routes (/api/*)"| VercelBackend["FastAPI Python Backend (Microservice)"]
         VercelBackend --> MongoDB1[("MongoDB Atlas Cloud DB")]
-        VercelBackend <--> SSL1["SSLCommerz Sandbox/Live Gateway"]
+        VercelBackend <--> SSL1["SSLCommerz Sandbox / Live Gateway"]
     end
 
     subgraph Option2["Option 2: Split Cloud (Vercel + Render)"]
-        User2["User Browser"] -->|Visits UI| VercelSPA["Frontend on Vercel (React + Vite)"]
-        VercelSPA -->|API via VITE_BACKEND_URL| RenderDocker["Backend on Render (Docker Container)"]
+        User2["User Browser"] -->|"Visits UI"| VercelSPA["Frontend on Vercel (React + Vite)"]
+        VercelSPA -->|"API Requests (VITE_BACKEND_URL)"| RenderDocker["Backend on Render (Docker Container)"]
         RenderDocker --> MongoDB2[("MongoDB Atlas Cloud DB")]
-        RenderDocker <--> SSL2["SSLCommerz Sandbox/Live Gateway"]
+        RenderDocker <--> SSL2["SSLCommerz Sandbox / Live Gateway"]
     end
 ```
 
