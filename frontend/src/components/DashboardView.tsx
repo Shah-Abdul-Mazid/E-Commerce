@@ -3,7 +3,6 @@ import {
   Clock,
   FileText,
   Key,
-  ShieldCheck,
   RefreshCw,
   Sparkles,
   Package,
@@ -47,7 +46,7 @@ export const DashboardView: React.FC<Props> = ({
   onViewMemo,
   onUpdateStatus,
 }) => {
-  const [activeTab, setActiveTab] = useState<'subs' | 'history' | 'admin' | 'products'>(
+  const [activeTab, setActiveTab] = useState<'subs' | 'history' | 'products'>(
     user.role === 'ADMIN' ? 'products' : 'subs'
   )
   const [selectedTrxForApproval, setSelectedTrxForApproval] = useState<string | null>(null)
@@ -358,20 +357,6 @@ export const DashboardView: React.FC<Props> = ({
           </button>
         )}
 
-        {user.role === 'ADMIN' && (
-          <button
-            onClick={() => setActiveTab('admin')}
-            className={`pb-3 text-xs font-bold transition flex items-center gap-2 border-b-2 cursor-pointer flex-shrink-0 ${
-              activeTab === 'admin'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
-            <span>Transactions Review ({allTransactions.length})</span>
-          </button>
-        )}
-
         <button
           onClick={() => setActiveTab('subs')}
           className={`pb-3 text-xs font-bold transition flex items-center gap-2 border-b-2 cursor-pointer flex-shrink-0 ${
@@ -393,7 +378,9 @@ export const DashboardView: React.FC<Props> = ({
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>Payment History & Memos ({transactions.length})</span>
+          <span>
+            Payment History & Memos ({user.role === 'ADMIN' ? allTransactions.length : transactions.length})
+          </span>
         </button>
       </div>
 
@@ -611,105 +598,7 @@ export const DashboardView: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Tab 3: Admin Control Panel (Transactions Review) */}
-      {activeTab === 'admin' && user.role === 'ADMIN' && (
-        <div className="bg-[#16122b] border border-amber-500/30 rounded-3xl overflow-hidden shadow-2xl space-y-6">
-          <div className="p-6 bg-gradient-to-r from-amber-950/40 to-[#16122b] border-b border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-bold tracking-widest text-amber-400 uppercase">
-                Admin Master Control
-              </span>
-              <h4 className="text-xl font-extrabold text-white">
-                Pending Transactions Verification & Credential Auto-Issuance
-              </h4>
-            </div>
-            <span className="px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-full text-xs font-bold">
-              {allTransactions.filter((t) => t.status === 'PENDING').length} Pending Review
-            </span>
-          </div>
 
-          <div className="overflow-x-auto px-6 pb-6">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#0d0b18] text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
-                <tr>
-                  <th className="p-3">Order</th>
-                  <th className="p-3">Customer</th>
-                  <th className="p-3">Method</th>
-                  <th className="p-3">Submitted TrxID</th>
-                  <th className="p-3">Amount</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Admin Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {allTransactions.map((trx) => (
-                  <tr key={trx.id} className="hover:bg-amber-950/10 transition">
-                    <td className="p-3">
-                      <span className="font-mono font-bold text-white block">{trx.order_id}</span>
-                      <span className="text-slate-400 text-[11px]">{trx.product_title || 'Item'}</span>
-                    </td>
-                    <td className="p-3">
-                      <span className="font-semibold text-amber-300 block">
-                        {trx.customer_name || 'Customer'}
-                      </span>
-                      <span className="text-slate-400 text-[11px] block font-mono">
-                        {trx.user_email || 'No email attached'}
-                      </span>
-                    </td>
-                    <td className="p-3 font-semibold text-purple-400">{trx.payment_method}</td>
-                    <td className="p-3 font-mono font-bold text-emerald-400">{trx.transaction_id}</td>
-                    <td className="p-3 font-black text-amber-400">৳ {trx.amount_bdt}</td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          trx.status === 'VERIFIED'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : trx.status === 'REJECTED'
-                            ? 'bg-rose-500/20 text-rose-400'
-                            : 'bg-amber-500/20 text-amber-400'
-                        }`}
-                      >
-                        {trx.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right space-x-2">
-                      <button
-                        onClick={() => onViewMemo(trx)}
-                        className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold cursor-pointer"
-                        title="Inspect generated slip"
-                      >
-                        Slip
-                      </button>
-
-                      {trx.status === 'PENDING' && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setSelectedTrxForApproval(trx.id)
-                              setCustomCreds(
-                                `Provider: EZOPY MART TECH\nAccount Key: EZ-${trx.order_id}\nExpires: 30 Days`
-                              )
-                            }}
-                            className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => onUpdateStatus(trx.id, 'REJECTED')}
-                            className="px-3 py-1 rounded bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white font-bold cursor-pointer"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Tab 1: Subscriptions */}
       {activeTab === 'subs' && (
@@ -794,7 +683,7 @@ export const DashboardView: React.FC<Props> = ({
                   <th className="p-4">Trx ID</th>
                   <th className="p-4">Amount</th>
                   <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Official Slip</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800 text-slate-300">
@@ -835,7 +724,7 @@ export const DashboardView: React.FC<Props> = ({
                           {trx.status}
                         </span>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right space-x-2">
                         <button
                           onClick={() => onViewMemo(trx)}
                           className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white transition font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
@@ -843,6 +732,28 @@ export const DashboardView: React.FC<Props> = ({
                           <FileText className="w-3.5 h-3.5" />
                           <span>View Slip</span>
                         </button>
+
+                        {user.role === 'ADMIN' && trx.status === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedTrxForApproval(trx.id)
+                                setCustomCreds(
+                                  `Provider: EZOPY MART TECH\nAccount Key: EZ-${trx.order_id}\nExpires: 30 Days`
+                                )
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => onUpdateStatus(trx.id, 'REJECTED')}
+                              className="px-3 py-1.5 rounded-lg bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs transition cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
