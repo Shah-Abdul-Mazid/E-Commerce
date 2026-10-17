@@ -8,9 +8,13 @@ A modern, full-stack e-commerce marketplace and academic learning platform. Buil
 
 ## 🌟 Recent Major Updates
 
-- 🛍️ **Admin Product & Price Management via Dashboard**: Admins can now create new courses/tools, update titles, badges, and descriptions, adjust prices in 1 click (with quick-edit modal), toggle active status, or delete products directly from the live dashboard.
+- 🔐 **Pre-Checkout Auth Gating & Auto-Resumption**: Clicking "Buy Now" or Cart Checkout now intelligently checks authentication status. Unauthenticated visitors are prompted with a contextual sign-in/register modal, which automatically launches their intended purchase upon login.
+- ⚡ **Auto-Filled & Verified Checkout Profiles**: Authenticated users enjoy an instant, frictionless checkout experience where their full name, email, and phone number are automatically populated and locked directly from the database to prevent typographical errors.
+- 🔄 **Real-Time SSLCommerz Fulfillment & Live Dashboard Sync**: Transactions completed via the SSLCommerz gateway now trigger real-time order synchronization (`sync-ssl-order`) and automatic dashboard refreshes without requiring manual browser reloads.
+- 📊 **Streamlined Admin Dashboard & Unified Payment Records**: Admin control panel features a direct "Payment History & Memos" view displaying customer name, email, transaction IDs, and verification statuses without manual review bottlenecks.
+- 🛍️ **Admin Product & Price Management via Dashboard**: Admins can create new courses/tools, update titles, badges, and descriptions, adjust prices in 1 click (with quick-edit modal), toggle active status, or delete products directly from the live dashboard.
 - 🌐 **8-Language Internationalization (i18n)**: Seamless language switcher supporting English (`en`), বাংলা (`bn`), हिन्दी (`hi`), Deutsch (`de`), Suomi (`fi`), Français (`fr`), Español (`es`), and العربية (`ar` with automatic RTL layout).
-- 🔒 **Bcrypt Password Security**: All passwords stored securely in SQLite/PostgreSQL as salted Bcrypt hashes (`$2b$12$...`).
+- 🔒 **Bcrypt Password Security**: All passwords stored securely as salted Bcrypt hashes (`$2b$12$...`).
 - 👁️ **Password Visibility Toggle**: Show/Hide password toggle (`<Eye />` / `<EyeOff />`) with 1-click admin and customer demo login preset chips.
 - 🎓 **Complete 4-Year B.Sc. CSE Curriculum**: All 21 core academic courses across 4 Years (1st, 2nd, 3rd Semesters) with prerequisites, credit breakdown, and dual view (Interactive Curriculum Accordion & Product Cards).
 - 💳 **Dual Payment Infrastructure**:
