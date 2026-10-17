@@ -100,6 +100,7 @@ E-Commerce/
 │   ├── .env.example             # Frontend environment variables template
 │   └── package.json             # Frontend dependencies
 ├── docker-compose.yml           # 1-command local full-stack Docker orchestration
+├── vercel.json                  # Monorepo full-stack config (Frontend Vite + Backend FastAPI)
 ├── DEPLOYMENT.md                # Render & Vercel deployment instructions
 └── Readme.md                    # Project documentation
 ```
@@ -145,13 +146,19 @@ docker compose up --build
 
 For full details, see the dedicated [DEPLOYMENT.md](file:///c:/Users/LENOVO/Desktop/E-Commerce/DEPLOYMENT.md) guide.
 
+### Option A: Monorepo Full-Stack on Vercel (`vercel.json`)
+Deploy the entire monorepo with both frontend and backend on Vercel:
+- **Root `vercel.json`**: Manages microservices for both the React/Vite frontend and FastAPI backend.
+- **Routing**: Rewrites `/api/(.*)` to the FastAPI backend service and `/(.*)` to the Vite frontend SPA.
+- **Environment Variables**: Configure `MONGODB_URL` / `DATABASE_URL`, `SSL_STORE_ID`, `SSL_STORE_PASSWORD`, and JWT secrets in the Vercel Project Settings.
+
+### Option B: Split Cloud Architecture (Render + Vercel)
 1. **Backend on Render.com**:
-   - Web Service pointing to `backend/` directory.
-   - Environment: Docker (`backend/Dockerfile`).
+   - Web Service pointing to `backend/` directory using `backend/Dockerfile`.
+   - Dynamic `$PORT` handling and auto-converted database connections.
    - Env vars: `APP_BASE_URL`, `FRONTEND_URL`, `SSL_STORE_ID`, `SSL_STORE_PASSWORD`, `DATABASE_URL`.
 2. **Frontend on Vercel.com**:
-   - Vite project pointing to `frontend/` directory.
-   - `vercel.json` rewrites all paths to `/index.html`.
+   - Vite project pointing to `frontend/` directory with client-side routing rewrites.
    - Env var: `VITE_BACKEND_URL=https://<your-render-backend-url>.onrender.com`.
 
 ---
