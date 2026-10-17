@@ -68,6 +68,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.exception_handlers import http_exception_handler
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+# ==========================================
+# Global exception handlers — ALWAYS return JSON
+# ==========================================
+
+@app.exception_handler(StarletteHTTPException)
+async def _http_exc_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail or "An error occurred"},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_exc_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": str(exc.body)},
+    )
+
+
+@app.exception_handler(Exception)
+async def _generic_exc_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception on %s: %s", request.url.path, exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error. Please try again."},
+    )
+
 # Import and mount EZOPY MART TECH routers & MongoDB Atlas seeding
 from app.api.v1.auth import router as auth_router
 from app.api.v1.products import router as products_router

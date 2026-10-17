@@ -45,13 +45,36 @@ export const AuthModal: React.FC<Props> = ({ onSuccess, onClose }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.detail || 'Authentication failed')
+
+      // Safely parse response — backend may return plain text on 500
+      let data: any = null
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        data = await res.json()
+      } else {
+        const text = await res.text()
+        // Try to parse anyway in case content-type header is missing
+        try { data = JSON.parse(text) } catch { data = null }
+        if (!res.ok) {
+          throw new Error(
+            res.status === 503 || res.status === 502
+              ? 'Backend is starting up. Please try again in a moment.'
+              : res.status === 500
+              ? 'Server error. Please try again later.'
+              : `Unexpected server response (HTTP ${res.status})`
+          )
+        }
       }
+
+      if (!res.ok) {
+        throw new Error(
+          (data && (data.detail || data.message)) || 'Authentication failed'
+        )
+      }
+
       onSuccess(data.access_token, data.user)
     } catch (err: any) {
-      setError(err.message || 'Network error')
+      setError(err.message || 'Network error. Please check your connection.')
     } finally {
       setLoading(false)
     }

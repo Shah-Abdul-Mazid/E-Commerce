@@ -36,36 +36,60 @@ def sanitize_mongodb_uri(raw_uri: str) -> str:
 
 
 class Settings:
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "EZOPY MART TECH")
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
-    ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7))
-    )
 
-    # MongoDB Atlas Connection URI read strictly from environment (.env)
-    _raw_mongo_uri: str = (
-        os.getenv("MONGODB_DATABASE")
-        or os.getenv("MONGODB_URI")
-        or os.getenv("MONGO_URI")
-        or os.getenv("DATABASE_URL")
-        or ""
-    )
-    MONGODB_URI: str = sanitize_mongodb_uri(_raw_mongo_uri)
-    MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "EcommarceDB")
+    @property
+    def PROJECT_NAME(self) -> str:  # noqa: N802
+        return os.getenv("PROJECT_NAME", "EZOPY MART TECH")
 
-    # Payment & Receiver Settings from environment (.env)
-    DBBL_RECEIVER_NAME: str = os.getenv("DBBL_RECEIVER_NAME", "EZOPY MART TECH")
-    DBBL_RECEIVER_BANK: str = os.getenv("DBBL_RECEIVER_BANK", "Dutch-Bangla Bank PLC")
-    DBBL_RECEIVER_ACCOUNT: str = os.getenv("DBBL_RECEIVER_ACCOUNT", "")
+    @property
+    def SECRET_KEY(self) -> str:  # noqa: N802
+        return os.getenv("SECRET_KEY", "")
 
-    # CORS Origins from environment (.env)
-    BACKEND_CORS_ORIGINS: List[str] = [  # noqa: RUF012, UP006
-        origin.strip()
-        for origin in os.getenv("BACKEND_CORS_ORIGINS", "*").split(",")
-        if origin.strip()
-    ]
+    @property
+    def ALGORITHM(self) -> str:  # noqa: N802
+        return os.getenv("JWT_ALGORITHM", "HS256")
+
+    @property
+    def ACCESS_TOKEN_EXPIRE_MINUTES(self) -> int:  # noqa: N802
+        return int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7)))
+
+    @property
+    def MONGODB_URI(self) -> str:  # noqa: N802
+        """Read MongoDB URI lazily so Vercel env-vars are available at request time."""
+        raw = (
+            os.getenv("MONGODB_DATABASE")
+            or os.getenv("MONGODB_URI")
+            or os.getenv("MONGO_URI")
+            or os.getenv("DATABASE_URL")
+            or ""
+        )
+        return sanitize_mongodb_uri(raw)
+
+    @property
+    def MONGODB_DB_NAME(self) -> str:  # noqa: N802
+        return os.getenv("MONGODB_DB_NAME", "EcommarceDB")
+
+    # Payment & Receiver Settings
+    @property
+    def DBBL_RECEIVER_NAME(self) -> str:  # noqa: N802
+        return os.getenv("DBBL_RECEIVER_NAME", "EZOPY MART TECH")
+
+    @property
+    def DBBL_RECEIVER_BANK(self) -> str:  # noqa: N802
+        return os.getenv("DBBL_RECEIVER_BANK", "Dutch-Bangla Bank PLC")
+
+    @property
+    def DBBL_RECEIVER_ACCOUNT(self) -> str:  # noqa: N802
+        return os.getenv("DBBL_RECEIVER_ACCOUNT", "")
+
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> List[str]:  # noqa: N802, UP006
+        return [
+            origin.strip()
+            for origin in os.getenv("BACKEND_CORS_ORIGINS", "*").split(",")
+            if origin.strip()
+        ]
 
 
 settings = Settings()
