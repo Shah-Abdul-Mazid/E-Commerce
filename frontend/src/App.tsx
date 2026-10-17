@@ -1057,6 +1057,15 @@ export default function App() {
   const [pendingCheckoutProduct, setPendingCheckoutProduct] = useState<Product | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
 
+  // Auto-dismiss any active notification after 8 seconds (max 10 seconds) without needing a page refresh
+  useEffect(() => {
+    if (!notification) return
+    const timer = setTimeout(() => {
+      setNotification(null)
+    }, 8000)
+    return () => clearTimeout(timer)
+  }, [notification])
+
   // Standalone memo generator state
   const [generatorTrxId, setGeneratorTrxId] = useState('LID02082191058')
   const [generatorAmount, setGeneratorAmount] = useState('599')
@@ -1082,6 +1091,7 @@ export default function App() {
 
     if (status === 'success' && tran_id) {
       setNotification(`🎉 SSLCommerz Payment Successful! TrxID: ${tran_id} (৳ ${amount || ''})`)
+      setTimeout(() => setNotification(null), 8000)
       setActiveMemoData({
         memo: {
           id: tran_id,
@@ -1133,9 +1143,11 @@ export default function App() {
       window.history.replaceState({}, document.title, window.location.pathname)
     } else if (status === 'failed') {
       setNotification(`❌ SSLCommerz payment was rejected or failed.`)
+      setTimeout(() => setNotification(null), 8000)
       window.history.replaceState({}, document.title, window.location.pathname)
     } else if (status === 'cancelled') {
       setNotification(`⚠️ Payment was cancelled on the SSLCommerz gateway.`)
+      setTimeout(() => setNotification(null), 8000)
       window.history.replaceState({}, document.title, window.location.pathname)
     }
   }, [token])
@@ -1434,9 +1446,18 @@ export default function App() {
     >
       {/* Toast Notification */}
       {notification && (
-        <div className="fixed top-24 right-6 z-50 p-4 rounded-2xl bg-emerald-900 text-white border border-emerald-500/50 text-xs shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-          <span className="font-semibold">{notification}</span>
+        <div className="fixed top-24 right-6 z-50 p-4 rounded-2xl bg-emerald-950/95 backdrop-blur-md text-white border border-emerald-500/50 text-xs shadow-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 max-w-md">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <span className="font-semibold leading-relaxed">{notification}</span>
+          </div>
+          <button
+            onClick={() => setNotification(null)}
+            className="p-1 rounded-lg text-emerald-400 hover:text-white hover:bg-emerald-900/60 transition cursor-pointer flex-shrink-0"
+            title="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
