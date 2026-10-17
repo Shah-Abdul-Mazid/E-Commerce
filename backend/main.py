@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 import logging
+from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException, Query
@@ -160,15 +161,154 @@ class CustomerInfo(BaseModel):
 class PaymentInitRequest(BaseModel):
     amount: float = Field(default=100.26, gt=0, description="Order total in BDT")
     product_name: str = Field(default="Premium Wireless Headphones", description="Name of the item")
+    product_id: Optional[str] = Field(default=None, description="Product ID")
     product_category: str = Field(default="Electronics", description="Product category")
     customer: Optional[CustomerInfo] = Field(default_factory=CustomerInfo)
     tran_id: Optional[str] = Field(default=None, description="Optional custom transaction ID")
+    user_id: Optional[str] = Field(default=None, description="User ID if available")
 
 
 class RefundRequest(BaseModel):
     bank_tran_id: str = Field(..., description="The transaction ID at Bank end")
     refund_amount: float = Field(..., gt=0, description="Amount to refund")
     refund_remarks: str = Field(..., description="Reason for refund")
+
+
+# ==========================================
+# MongoDB SSLCommerz Order Fulfillment Helper
+# ==========================================
+
+async def _fulfill_ssl_order(payload: dict, val_id: str, tran_id: str, amount_val: float = None):
+    """Save verified SSLCommerz transaction, memo, and active subscription into MongoDB Atlas."""
+    try:
+        from app.core.database import get_database
+        db = get_database()
+        now_utc = datetime.utcnow()
+        amount = float(amount_val or payload.get("amount") or 599.0)
+        card_type = payload.get("card_type") or "SSL-CARD"
+        bank_tran_id = payload.get("bank_tran_id") or ""
+
+        existing_trx = await db["transactions"].find_one({"transaction_id": tran_id})
+
+        user_id = payload.get("value_a") or (existing_trx.get("user_id") if existing_trx else None)
+        customer_email = (
+            payload.get("value_c")
+            or payload.get("cus_email")
+            or (existing_trx.get("customer_email") if existing_trx else None)
+            or ""
+        ).strip().lower()
+        customer_name = payload.get("cus_name") or (existing_trx.get("customer_name") if existing_trx else None) or "Customer"
+        customer_phone = payload.get("cus_phone") or (existing_trx.get("customer_phone") if existing_trx else None)
+
+        product_id = payload.get("value_b") or (existing_trx.get("product_id") if existing_trx else None)
+        product_title = payload.get("value_d") or (existing_trx.get("product_title") if existing_trx else None)
+
+        if not user_id and customer_email:
+            u = await db["users"].find_one({"email": customer_email})
+            if u:
+                user_id = u["id"]
+                customer_name = customer_name or u.get("full_name")
+
+        if not product_id or not product_title:
+            p = await db["products"].find_one({"price_bdt": amount})
+            if not p:
+                p = await db["products"].find_one({"title": {"$regex": "Premium", "$options": "i"}})
+            if p:
+                product_id = product_id or p["id"]
+                product_title = product_title or p["title"]
+
+        product_id = product_id or "5406c043-cb0a-41e8-b7a9-8e537e3b1ea0"
+        product_title = product_title or "Premium Package"
+
+        trx_uuid = (existing_trx.get("id") if existing_trx else None) or str(uuid.uuid4())
+        order_id = (existing_trx.get("order_id") if existing_trx else None) or f"EZ-{uuid.uuid4().hex[:8].upper()}"
+
+        await db["transactions"].update_one(
+            {"transaction_id": tran_id},
+            {
+                "$set": {
+                    "id": trx_uuid,
+                    "order_id": order_id,
+                    "user_id": user_id or "",
+                    "customer_email": customer_email,
+                    "customer_name": customer_name,
+                    "customer_phone": customer_phone,
+                    "product_id": product_id,
+                    "product_title": product_title,
+                    "amount_bdt": amount,
+                    "payment_method": "SSLCOMMERZ",
+                    "transaction_id": tran_id,
+                    "sender_account": payload.get("card_no") or payload.get("card_issuer") or card_type,
+                    "memo_type": "BILL_PAYMENT",
+                    "status": "VERIFIED",
+                    "val_id": val_id,
+                    "bank_tran_id": bank_tran_id,
+                    "created_at": (existing_trx.get("created_at") if existing_trx else now_utc),
+                    "updated_at": now_utc,
+                }
+            },
+            upsert=True,
+        )
+
+        # Memo slip
+        await db["transaction_memos"].update_one(
+            {"transaction_id": trx_uuid},
+            {
+                "$set": {
+                    "id": str(uuid.uuid4()),
+                    "transaction_id": trx_uuid,
+                    "memo_type": "BILL_PAYMENT",
+                    "receiver_name": "EZOPY MART TECH",
+                    "receiver_bank": "Dutch-Bangla Bank PLC",
+                    "receiver_account": "107.110.198425",
+                    "sender_card_type": card_type,
+                    "sender_card_number": payload.get("card_no") or "9011-XXXX-XXXX-4581",
+                    "nexus_pay_id": f"NX-{tran_id[-6:]}",
+                    "biller_name": product_title,
+                    "biller_code": "DBBL-EDU-8810",
+                    "student_id": "2022-1-60-019",
+                    "paid_from_channel": "SSLCOMMERZ",
+                    "fee_bdt": 0.00,
+                    "formatted_timestamp": datetime.now().strftime("%d-%b-%Y %I:%M:%S %p"),
+                    "raw_reference": order_id,
+                }
+            },
+            upsert=True,
+        )
+
+        # Activate subscription
+        if user_id or customer_email:
+            sub_filter = {"user_id": user_id, "product_id": product_id} if user_id else {"customer_email": customer_email, "product_id": product_id}
+            existing_sub = await db["subscriptions"].find_one(sub_filter)
+            creds = (
+                f"Product: {product_title}\n"
+                f"Provider: EZOPY MART TECH\n"
+                f"License Token: EZ-VIP-{uuid.uuid4().hex[:10].upper()}\n"
+                f"Authorized User: {customer_email}\n"
+                f"Access Status: ACTIVE • Direct Cloud & Extension Sync"
+            )
+            if existing_sub:
+                new_end = existing_sub.get("end_date", now_utc) + timedelta(days=30)
+                await db["subscriptions"].update_one(
+                    {"_id": existing_sub["_id"]},
+                    {"$set": {"end_date": new_end, "access_credentials": creds, "status": "ACTIVE"}},
+                )
+            else:
+                sub_doc = {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id or "",
+                    "customer_email": customer_email,
+                    "product_id": product_id,
+                    "product_title": product_title,
+                    "start_date": now_utc,
+                    "end_date": now_utc + timedelta(days=30),
+                    "status": "ACTIVE",
+                    "access_credentials": creds,
+                }
+                await db["subscriptions"].insert_one(sub_doc)
+        logger.info(f"SSLCommerz order {tran_id} fulfilled in MongoDB for {customer_email} (User: {user_id})")
+    except Exception as e:
+        logger.error(f"Error in _fulfill_ssl_order for {tran_id}: {str(e)}", exc_info=True)
 
 
 # ==========================================
@@ -214,6 +354,51 @@ async def init_payment(request: Request, payload: PaymentInitRequest):
     # Resolve APP_BASE_URL lazily at request time (Vercel-safe)
     app_origin = _resolve_origin(request, os.getenv("APP_BASE_URL", "").rstrip("/"))
 
+    user_id = payload.user_id
+    if not user_id:
+        auth_hdr = request.headers.get("authorization", "")
+        if auth_hdr.startswith("Bearer "):
+            try:
+                from app.core.security import decode_access_token
+                user_id = decode_access_token(auth_hdr.split(" ", 1)[1])
+            except Exception:
+                pass
+
+    from app.core.database import get_database
+    db = get_database()
+    customer_email = cust.email.strip().lower() if cust.email else ""
+    if not user_id and customer_email:
+        u = await db["users"].find_one({"email": customer_email})
+        if u:
+            user_id = u["id"]
+
+    # Initial order persistence in MongoDB Atlas
+    order_id = f"EZ-{uuid.uuid4().hex[:8].upper()}"
+    now_utc = datetime.utcnow()
+    trx_uuid = str(uuid.uuid4())
+    trx_init_doc = {
+        "id": trx_uuid,
+        "order_id": order_id,
+        "user_id": user_id or "",
+        "customer_email": customer_email,
+        "customer_name": cust.name,
+        "customer_phone": cust.phone,
+        "product_id": payload.product_id,
+        "product_title": payload.product_name,
+        "amount_bdt": round(payload.amount, 2),
+        "payment_method": "SSLCOMMERZ",
+        "transaction_id": tran_id,
+        "sender_account": cust.phone or "SSLCOMMERZ",
+        "memo_type": "BILL_PAYMENT",
+        "status": "PENDING",
+        "created_at": now_utc,
+    }
+    await db["transactions"].update_one(
+        {"transaction_id": tran_id},
+        {"$set": trx_init_doc},
+        upsert=True,
+    )
+
     # Define callback URLs routed back to this FastAPI server
     post_body = {
         "total_amount": round(payload.amount, 2),
@@ -236,6 +421,10 @@ async def init_payment(request: Request, payload: PaymentInitRequest):
         "product_name": payload.product_name,
         "product_category": payload.product_category,
         "product_profile": "general",
+        "value_a": user_id or "",
+        "value_b": payload.product_id or "",
+        "value_c": customer_email,
+        "value_d": payload.product_name,
     }
 
     try:
@@ -303,7 +492,7 @@ async def init_payment(request: Request, payload: PaymentInitRequest):
 async def payment_success(request: Request):
     """
     2. SSLCommerz POST callback on successful payment.
-    Validates transaction order with SSLCommerz validation API, updates order, and redirects user to frontend.
+    Validates transaction order with SSLCommerz validation API, updates order in MongoDB, and redirects user to frontend.
     """
     form_data = await request.form()
     payload = dict(form_data)
@@ -311,7 +500,7 @@ async def payment_success(request: Request):
 
     tran_id = payload.get("tran_id")
     val_id = payload.get("val_id")
-    amount = payload.get("amount")
+    amount = float(payload.get("amount") or 0.0)
     card_type = payload.get("card_type")
     bank_tran_id = payload.get("bank_tran_id")
 
@@ -329,7 +518,10 @@ async def payment_success(request: Request):
         except Exception as e:
             logger.error(f"Validation check failed with error: {str(e)}")
 
-    # Update order state
+    # Fulfill order in MongoDB Atlas (saves Transaction, Memo, and Active Subscription)
+    await _fulfill_ssl_order(payload, val_id, tran_id, amount)
+
+    # Update order state in memory
     if tran_id in orders_db:
         orders_db[tran_id].update({
             "status": "VALID" if is_valid else "PAID_UNVERIFIED",
@@ -478,6 +670,10 @@ async def instant_payment_notification(request: Request):
             "validation_response": validation_res,
             "status": "VALID" if (validation_res and validation_res.get("status") in ["VALID", "VALIDATED"]) else ipn_status
         })
+
+    # Fulfill order in MongoDB Atlas if valid or successful
+    if ipn_status in ["VALID", "VALIDATED", "SUCCESS", "COMPLETE"] or (validation_res and validation_res.get("status") in ["VALID", "VALIDATED"]):
+        await _fulfill_ssl_order(payload, val_id, tran_id, float(payload.get("amount") or 0.0))
 
     return {
         "status": "SUCCESS",

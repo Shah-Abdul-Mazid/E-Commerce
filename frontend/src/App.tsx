@@ -1077,6 +1077,7 @@ export default function App() {
     const amount = params.get('amount')
     const val_id = params.get('val_id')
     const card_type = params.get('card_type')
+    const bank_tran_id = params.get('bank_tran_id')
 
     if (status === 'success' && tran_id) {
       setNotification(`🎉 SSLCommerz Payment Successful! TrxID: ${tran_id} (৳ ${amount || ''})`)
@@ -1104,6 +1105,30 @@ export default function App() {
           status: 'VERIFIED',
         },
       })
+
+      // Sync transaction & activate subscription in backend with fallback
+      const activeToken = token || localStorage.getItem('ezopy_token')
+      if (activeToken) {
+        fetch(`${BACKEND_URL}/api/v1/checkout/sync-ssl-order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${activeToken}`,
+          },
+          body: JSON.stringify({
+            tran_id,
+            val_id,
+            amount: parseFloat(amount || '0'),
+            card_type,
+            bank_tran_id,
+          }),
+        })
+          .then(() => {
+            refreshUserData(activeToken, user?.role === 'ADMIN')
+          })
+          .catch((e) => console.error('Failed to sync SSL order:', e))
+      }
+
       window.history.replaceState({}, document.title, window.location.pathname)
     } else if (status === 'failed') {
       setNotification(`❌ SSLCommerz payment was rejected or failed.`)

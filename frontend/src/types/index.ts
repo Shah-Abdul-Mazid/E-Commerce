@@ -68,6 +68,8 @@ export interface Transaction {
   status: TransactionStatus
   created_at: string
   memo?: TransactionMemo
+  user_email?: string
+  customer_name?: string
 }
 
 export interface Subscription {

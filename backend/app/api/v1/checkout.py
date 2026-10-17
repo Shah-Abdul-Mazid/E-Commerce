@@ -2,6 +2,7 @@ import re
 import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional  # noqa: F401, UP035
+from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.database import get_async_db
@@ -64,14 +65,23 @@ async def _build_transaction_response(
         if prod:
             product_title = prod.get("title")
 
+    # Fetch user email and customer name so admin and user see who purchased
+    user_email = trx_doc.get("customer_email") or trx_doc.get("user_email")
+    customer_name = trx_doc.get("customer_name")
+    if (not user_email or not customer_name) and trx_doc.get("user_id"):
+        user = await db["users"].find_one({"id": trx_doc["user_id"]})
+        if user:
+            user_email = user_email or user.get("email")
+            customer_name = customer_name or user.get("full_name")
+
     return TransactionResponse(
         id=trx_doc["id"],
         order_id=trx_doc["order_id"],
-        user_id=trx_doc["user_id"],
+        user_id=trx_doc.get("user_id") or "",
         product_id=trx_doc.get("product_id"),
         product_title=product_title,
         amount_bdt=float(trx_doc.get("amount_bdt", 0.0)),
-        payment_method=PaymentMethod(trx_doc["payment_method"]),
+        payment_method=PaymentMethod(trx_doc.get("payment_method", PaymentMethod.SSLCOMMERZ.value)),
         transaction_id=trx_doc["transaction_id"],
         sender_account=trx_doc.get("sender_account"),
         memo_type=MemoType(trx_doc.get("memo_type", MemoType.FUND_TRANSFER.value)),
@@ -80,6 +90,8 @@ async def _build_transaction_response(
         ),
         created_at=trx_doc.get("created_at", datetime.utcnow()),  # noqa: DTZ003
         memo=_doc_to_memo_response(memo_doc),
+        user_email=user_email,
+        customer_name=customer_name,
     )
 
 
@@ -234,13 +246,149 @@ async def submit_checkout(
     return await _build_transaction_response(db, trx_doc, product["title"])
 
 
+class SyncSSLOrderRequest(BaseModel):
+    transaction_id: str
+    amount: Optional[float] = None
+    product_title: Optional[str] = None
+    product_id: Optional[str] = None
+
+
+@router.post("/sync-ssl-order", response_model=TransactionResponse)
+async def sync_ssl_order(
+    payload: SyncSSLOrderRequest,
+    db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
+    current_user: UserResponse = Depends(get_current_user),  # noqa: B008
+):
+    tran_id = payload.transaction_id.strip()
+    now_utc = datetime.utcnow()  # noqa: DTZ003
+
+    product = None
+    if payload.product_id:
+        product = await db["products"].find_one({"id": payload.product_id})
+    if not product and payload.product_title:
+        escaped_title = re.escape(payload.product_title.strip())
+        product = await db["products"].find_one({"title": {"$regex": escaped_title, "$options": "i"}})
+    if not product and payload.amount:
+        product = await db["products"].find_one({"price_bdt": payload.amount})
+    if not product:
+        product = await db["products"].find_one({"title": {"$regex": "Premium", "$options": "i"}})
+
+    prod_id = (product["id"] if product else payload.product_id) or "5406c043-cb0a-41e8-b7a9-8e537e3b1ea0"
+    prod_title = (product["title"] if product else payload.product_title) or "Premium Package"
+    amount = float(payload.amount or (product["price_bdt"] if product else 599.0))
+
+    trx_doc = await db["transactions"].find_one({"transaction_id": tran_id})
+    if trx_doc:
+        trx_uuid = trx_doc["id"]
+        order_id = trx_doc.get("order_id") or f"EZ-{uuid.uuid4().hex[:8].upper()}"
+        await db["transactions"].update_one(
+            {"_id": trx_doc["_id"]},
+            {
+                "$set": {
+                    "user_id": current_user.id,
+                    "customer_email": current_user.email.strip().lower(),
+                    "customer_name": current_user.full_name,
+                    "product_id": prod_id,
+                    "product_title": prod_title,
+                    "status": TransactionStatus.VERIFIED.value,
+                    "updated_at": now_utc,
+                }
+            },
+        )
+        trx_doc = await db["transactions"].find_one({"id": trx_uuid})
+    else:
+        trx_uuid = str(uuid.uuid4())
+        order_id = f"EZ-{uuid.uuid4().hex[:8].upper()}"
+        trx_doc = {
+            "id": trx_uuid,
+            "order_id": order_id,
+            "user_id": current_user.id,
+            "customer_email": current_user.email.strip().lower(),
+            "customer_name": current_user.full_name,
+            "product_id": prod_id,
+            "product_title": prod_title,
+            "amount_bdt": amount,
+            "payment_method": PaymentMethod.SSLCOMMERZ.value,
+            "transaction_id": tran_id,
+            "sender_account": "SSLCOMMERZ",
+            "memo_type": MemoType.BILL_PAYMENT.value,
+            "status": TransactionStatus.VERIFIED.value,
+            "created_at": now_utc,
+        }
+        await db["transactions"].insert_one(trx_doc)
+
+    # Ensure Memo exists
+    existing_memo = await db["transaction_memos"].find_one({"transaction_id": trx_uuid})
+    if not existing_memo:
+        memo_doc = {
+            "id": str(uuid.uuid4()),
+            "transaction_id": trx_uuid,
+            "memo_type": MemoType.BILL_PAYMENT.value,
+            "receiver_name": settings.DBBL_RECEIVER_NAME,
+            "receiver_bank": settings.DBBL_RECEIVER_BANK,
+            "receiver_account": settings.DBBL_RECEIVER_ACCOUNT,
+            "sender_card_type": "SSLCOMMERZ GATEWAY",
+            "sender_card_number": "9011-XXXX-XXXX-4581",
+            "nexus_pay_id": f"NX-{tran_id[-6:]}",
+            "biller_name": prod_title,
+            "biller_code": "DBBL-EDU-8810",
+            "student_id": "2022-1-60-019",
+            "paid_from_channel": "SSLCOMMERZ",
+            "fee_bdt": 0.00,
+            "formatted_timestamp": datetime.now().strftime("%d-%b-%Y %I:%M:%S %p"),
+            "raw_reference": order_id,
+        }
+        await db["transaction_memos"].insert_one(memo_doc)
+
+    # Ensure Subscription exists & is active
+    creds = (
+        f"Product: {prod_title}\n"
+        f"Provider: EZOPY MART TECH\n"
+        f"License Token: EZ-VIP-{uuid.uuid4().hex[:10].upper()}\n"
+        f"Authorized User: {current_user.email}\n"
+        f"Access Status: ACTIVE • Direct Cloud & Extension Sync"
+    )
+    existing_sub = await db["subscriptions"].find_one({
+        "user_id": current_user.id,
+        "product_id": prod_id,
+        "status": SubscriptionStatus.ACTIVE.value,
+    })
+    if existing_sub:
+        new_end = existing_sub.get("end_date", now_utc) + timedelta(days=30)
+        await db["subscriptions"].update_one(
+            {"id": existing_sub["id"]},
+            {"$set": {"end_date": new_end, "access_credentials": creds, "status": SubscriptionStatus.ACTIVE.value}},
+        )
+    else:
+        sub_doc = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user.id,
+            "customer_email": current_user.email.strip().lower(),
+            "product_id": prod_id,
+            "product_title": prod_title,
+            "start_date": now_utc,
+            "end_date": now_utc + timedelta(days=30),
+            "status": SubscriptionStatus.ACTIVE.value,
+            "access_credentials": creds,
+        }
+        await db["subscriptions"].insert_one(sub_doc)
+
+    return await _build_transaction_response(db, trx_doc, prod_title)
+
+
 @router.get("/my-history", response_model=list[TransactionResponse])
 async def get_my_transactions(
     db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
     current_user: UserResponse = Depends(get_current_user),  # noqa: B008
 ):
+    user_email = current_user.email.strip().lower()
     cursor = (
-        db["transactions"].find({"user_id": current_user.id}).sort("created_at", -1)
+        db["transactions"].find({
+            "$or": [
+                {"user_id": current_user.id},
+                {"customer_email": user_email},
+            ]
+        }).sort("created_at", -1)
     )
     docs = await cursor.to_list(length=500)
     output = []
@@ -327,7 +475,13 @@ async def get_my_subscriptions(
     db: AsyncIOMotorDatabase = Depends(get_async_db),  # noqa: B008
     current_user: UserResponse = Depends(get_current_user),  # noqa: B008
 ):
-    cursor = db["subscriptions"].find({"user_id": current_user.id}).sort("end_date", -1)
+    user_email = current_user.email.strip().lower()
+    cursor = db["subscriptions"].find({
+        "$or": [
+            {"user_id": current_user.id},
+            {"customer_email": user_email},
+        ]
+    }).sort("end_date", -1)
     subs = await cursor.to_list(length=500)
 
     now = datetime.utcnow()  # noqa: DTZ003
@@ -355,3 +509,4 @@ async def get_my_subscriptions(
             )
         )
     return output
+

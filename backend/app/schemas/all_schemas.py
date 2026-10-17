@@ -139,6 +139,8 @@ class TransactionResponse(BaseModel):
     status: TransactionStatus
     created_at: datetime
     memo: Optional[TransactionMemoResponse] = None  # noqa: UP045
+    user_email: Optional[str] = None  # noqa: UP045
+    customer_name: Optional[str] = None  # noqa: UP045
 
     class Config:
         from_attributes = True

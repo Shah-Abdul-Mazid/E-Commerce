@@ -632,7 +632,8 @@ export const DashboardView: React.FC<Props> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-[#0d0b18] text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
                 <tr>
-                  <th className="p-3">Order / User</th>
+                  <th className="p-3">Order</th>
+                  <th className="p-3">Customer</th>
                   <th className="p-3">Method</th>
                   <th className="p-3">Submitted TrxID</th>
                   <th className="p-3">Amount</th>
@@ -646,6 +647,14 @@ export const DashboardView: React.FC<Props> = ({
                     <td className="p-3">
                       <span className="font-mono font-bold text-white block">{trx.order_id}</span>
                       <span className="text-slate-400 text-[11px]">{trx.product_title || 'Item'}</span>
+                    </td>
+                    <td className="p-3">
+                      <span className="font-semibold text-amber-300 block">
+                        {trx.customer_name || 'Customer'}
+                      </span>
+                      <span className="text-slate-400 text-[11px] block font-mono">
+                        {trx.user_email || 'No email attached'}
+                      </span>
                     </td>
                     <td className="p-3 font-semibold text-purple-400">{trx.payment_method}</td>
                     <td className="p-3 font-mono font-bold text-emerald-400">{trx.transaction_id}</td>
@@ -762,9 +771,15 @@ export const DashboardView: React.FC<Props> = ({
       {activeTab === 'history' && (
         <div className="bg-[#16122b] border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
           <div className="p-6 border-b border-slate-800">
-            <h4 className="text-base font-bold text-white">Your Orders & NexusPay Payment Slips</h4>
+            <h4 className="text-base font-bold text-white">
+              {user.role === 'ADMIN'
+                ? 'All Orders & NexusPay Payment Slips (Master Audit)'
+                : 'Your Orders & NexusPay Payment Slips'}
+            </h4>
             <p className="text-xs text-slate-400 mt-0.5">
-              View official transaction records, invoice receipts, and generated DBBL payment slips.
+              {user.role === 'ADMIN'
+                ? 'Comprehensive audit log of all customer purchases, TrxIDs, and generated payment slips.'
+                : 'View official transaction records, invoice receipts, and generated DBBL payment slips.'}
             </p>
           </div>
 
@@ -773,6 +788,7 @@ export const DashboardView: React.FC<Props> = ({
               <thead className="bg-[#0d0b18] text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
                 <tr>
                   <th className="p-4">Order ID</th>
+                  {user.role === 'ADMIN' && <th className="p-4">Customer</th>}
                   <th className="p-4">Item</th>
                   <th className="p-4">Channel</th>
                   <th className="p-4">Trx ID</th>
@@ -782,16 +798,26 @@ export const DashboardView: React.FC<Props> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800 text-slate-300">
-                {transactions.length === 0 ? (
+                {(user.role === 'ADMIN' ? allTransactions : transactions).length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500">
+                    <td colSpan={user.role === 'ADMIN' ? 8 : 7} className="p-8 text-center text-slate-500">
                       No transactions recorded yet.
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((trx) => (
+                  (user.role === 'ADMIN' ? allTransactions : transactions).map((trx) => (
                     <tr key={trx.id} className="hover:bg-slate-900/50 transition">
                       <td className="p-4 font-mono font-bold text-white">{trx.order_id}</td>
+                      {user.role === 'ADMIN' && (
+                        <td className="p-4">
+                          <span className="font-semibold text-amber-300 block">
+                            {trx.customer_name || 'Customer'}
+                          </span>
+                          <span className="text-slate-400 text-[11px] block font-mono">
+                            {trx.user_email || 'No email attached'}
+                          </span>
+                        </td>
+                      )}
                       <td className="p-4">{trx.product_title || 'Subscription'}</td>
                       <td className="p-4 font-semibold text-purple-400">{trx.payment_method}</td>
                       <td className="p-4 font-mono text-emerald-400 font-bold">{trx.transaction_id}</td>
