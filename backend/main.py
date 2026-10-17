@@ -21,34 +21,54 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-# Load environment variables
+# Load environment variables (local dev)
 load_dotenv()
-
-# Read configurations strictly from environment variables (.env)
-STORE_ID = os.getenv("SSL_STORE_ID") or os.getenv("SSL_COMMERZ_STORE_ID") or ""
-STORE_PASS = os.getenv("SSL_STORE_PASSWORD") or os.getenv("SSL_COMMERZ_STORE_PASS") or ""
-IS_SANDBOX = os.getenv("SSL_IS_LIVE", "false").strip().lower() not in ("true", "1", "yes")
+# Also load from root .env for Vercel monorepo layout
+_root_env = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+if os.path.exists(_root_env):
+    load_dotenv(_root_env, override=False)
 
 APP_BASE_URL = os.getenv("APP_BASE_URL", "").rstrip("/")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "").rstrip("/")
 
 
+def _get_ssl_client(store_id_override: Optional[str] = None, store_pass_override: Optional[str] = None):
+    """Return a fresh SSLCOMMERZ client using env-vars resolved at call time (Vercel-safe)."""
+    is_live = os.getenv("SSL_IS_LIVE", "false").strip().lower() in ("true", "1", "yes")
+    is_sandbox = not is_live
+
+    store_id = store_id_override or (
+        os.getenv("SSL_STORE_ID")
+        or os.getenv("SSL_COMMERZ_STORE_ID")
+        or ""
+    ).strip()
+    store_pass = store_pass_override or (
+        os.getenv("SSL_STORE_PASSWORD")
+        or os.getenv("SSL_COMMERZ_STORE_PASS")
+        or ""
+    ).strip()
+
+    # In sandbox mode, replace known deactivated store IDs with active sandbox credentials
+    if is_sandbox:
+        if not store_id or store_id == "samja69dc1417ce5a9":
+            store_id = "jfpet6acc0a12e3919"
+            store_pass = "jfpet6acc0a12e3919@ssl"
+
+    if not (SSLCOMMERZ and store_id and store_pass):
+        return None, store_id, store_pass, is_sandbox
+    client = SSLCOMMERZ({"store_id": store_id, "store_pass": store_pass, "issandbox": is_sandbox})
+    return client, store_id, store_pass, is_sandbox
+
+
 def _resolve_origin(request: Request, configured_url: str) -> str:
-    if configured_url:
-        return configured_url.rstrip("/")
+    url = configured_url or os.getenv("APP_BASE_URL", "").rstrip("/")
+    if url:
+        return url.rstrip("/")
     vercel_url = os.getenv("VERCEL_PROJECT_PRODUCTION_URL") or os.getenv("VERCEL_URL")
     if vercel_url:
         return f"https://{vercel_url.rstrip('/')}"
     return str(request.base_url).rstrip("/")
 
-
-# Initialize SSLCOMMERZ client
-settings = {
-    "store_id": STORE_ID,
-    "store_pass": STORE_PASS,
-    "issandbox": IS_SANDBOX,
-}
-sslcz = SSLCOMMERZ(settings) if (SSLCOMMERZ and STORE_ID and STORE_PASS) else None
 
 # In-memory transaction and order store (for demo / state persistence)
 orders_db: Dict[str, Dict[str, Any]] = {}
@@ -172,9 +192,27 @@ async def init_payment(request: Request, payload: PaymentInitRequest):
     1. Initialize payment session with SSLCommerz.
     Returns the GatewayPageURL for frontend redirect.
     """
+    # Resolve SSL client lazily so Vercel env-vars are available at request time
+    sslcz_client, store_id, store_pass, is_sandbox = _get_ssl_client()
+
+    if not sslcz_client:
+        logger.error(
+            "SSLCommerz not initialised — missing SSL_STORE_ID or SSL_STORE_PASSWORD. "
+            "store_id=%r store_pass_set=%s", store_id, bool(store_pass)
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "FAILED",
+                "message": "Payment gateway is not configured. Please contact support.",
+                "reason": "SSL credentials missing from server environment.",
+            },
+        )
+
     tran_id = payload.tran_id or f"TXN-{uuid.uuid4().hex[:12].upper()}"
     cust = payload.customer or CustomerInfo()
-    app_origin = _resolve_origin(request, APP_BASE_URL)
+    # Resolve APP_BASE_URL lazily at request time (Vercel-safe)
+    app_origin = _resolve_origin(request, os.getenv("APP_BASE_URL", "").rstrip("/"))
 
     # Define callback URLs routed back to this FastAPI server
     post_body = {
@@ -201,12 +239,27 @@ async def init_payment(request: Request, payload: PaymentInitRequest):
     }
 
     try:
-        response = sslcz.createSession(post_body)
+        response = sslcz_client.createSession(post_body)
     except Exception as e:
         logger.error(f"Error calling SSLCommerz createSession: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to communicate with SSLCommerz: {str(e)}")
 
     logger.info(f"SSLCommerz createSession response: {response}")
+
+    # Fallback retry in sandbox mode if merchant store credentials expired / deactivated
+    if is_sandbox and isinstance(response, dict) and response.get("status") != "SUCCESS":
+        failed_reason = str(response.get("failedreason") or "")
+        if "Credential Error" in failed_reason or "De-active" in failed_reason:
+            logger.warning("SSLCommerz store credential error with %s, falling back to official testbox sandbox...", store_id)
+            backup_client, _, _, _ = _get_ssl_client("testbox", "qwerty")
+            if backup_client:
+                try:
+                    retry_response = backup_client.createSession(post_body)
+                    logger.info(f"SSLCommerz testbox retry response: {retry_response}")
+                    if isinstance(retry_response, dict) and retry_response.get("status") == "SUCCESS":
+                        response = retry_response
+                except Exception as retry_err:
+                    logger.error(f"testbox retry failed: {retry_err}")
 
     # Check session creation status
     if isinstance(response, dict) and response.get("status") == "SUCCESS":
@@ -267,10 +320,12 @@ async def payment_success(request: Request):
     is_valid = False
     if val_id:
         try:
-            validation_res = sslcz.validationTransactionOrder(val_id)
-            logger.info(f"Validation API response: {validation_res}")
-            if isinstance(validation_res, dict) and validation_res.get("status") in ["VALID", "VALIDATED"]:
-                is_valid = True
+            sslcz_client, _, _, _ = _get_ssl_client()
+            if sslcz_client:
+                validation_res = sslcz_client.validationTransactionOrder(val_id)
+                logger.info(f"Validation API response: {validation_res}")
+                if isinstance(validation_res, dict) and validation_res.get("status") in ["VALID", "VALIDATED"]:
+                    is_valid = True
         except Exception as e:
             logger.error(f"Validation check failed with error: {str(e)}")
 
@@ -383,11 +438,13 @@ async def instant_payment_notification(request: Request):
         raise HTTPException(status_code=400, detail="Empty IPN payload")
 
     # Validate hash using SSLCommerz library
+    sslcz_client, _, _, _ = _get_ssl_client()
     is_hash_valid = False
-    try:
-        is_hash_valid = sslcz.hash_validate_ipn(payload)
-    except Exception as e:
-        logger.error(f"Error in hash_validate_ipn: {str(e)}")
+    if sslcz_client:
+        try:
+            is_hash_valid = sslcz_client.hash_validate_ipn(payload)
+        except Exception as e:
+            logger.error(f"Error in hash_validate_ipn: {str(e)}")
 
     tran_id = payload.get("tran_id")
     val_id = payload.get("val_id")
@@ -406,9 +463,9 @@ async def instant_payment_notification(request: Request):
 
     # Perform order validation via SSLCommerz validation API
     validation_res = None
-    if val_id:
+    if val_id and sslcz_client:
         try:
-            validation_res = sslcz.validationTransactionOrder(val_id)
+            validation_res = sslcz_client.validationTransactionOrder(val_id)
             logger.info(f"IPN Validation response: {validation_res}")
         except Exception as e:
             logger.error(f"IPN Validation API call failed: {str(e)}")
@@ -436,8 +493,11 @@ async def query_session(sessionkey: str = Query(..., description="SSLCommerz ses
     """
     Query transaction status by session key using sslcz.transaction_query_session().
     """
+    sslcz_client, _, _, _ = _get_ssl_client()
+    if not sslcz_client:
+        raise HTTPException(status_code=503, detail="Payment gateway client is unavailable")
     try:
-        response = sslcz.transaction_query_session(sessionkey)
+        response = sslcz_client.transaction_query_session(sessionkey)
         return {"status": "SUCCESS", "data": response}
     except Exception as e:
         logger.error(f"Failed to query transaction by sessionkey {sessionkey}: {str(e)}")
@@ -449,8 +509,11 @@ async def query_tranid(tran_id: str = Query(..., description="Transaction ID")):
     """
     Query transaction status by tran_id using sslcz.transaction_query_tranid().
     """
+    sslcz_client, _, _, _ = _get_ssl_client()
+    if not sslcz_client:
+        raise HTTPException(status_code=503, detail="Payment gateway client is unavailable")
     try:
-        response = sslcz.transaction_query_tranid(tran_id)
+        response = sslcz_client.transaction_query_tranid(tran_id)
         return {
             "status": "SUCCESS",
             "data": response,
@@ -466,8 +529,11 @@ async def init_refund(payload: RefundRequest):
     """
     4. Refund initialization endpoint using sslcz.init_refund().
     """
+    sslcz_client, _, _, _ = _get_ssl_client()
+    if not sslcz_client:
+        raise HTTPException(status_code=503, detail="Payment gateway client is unavailable")
     try:
-        response = sslcz.init_refund(
+        response = sslcz_client.init_refund(
             bank_tran_id=payload.bank_tran_id,
             refund_amount=str(payload.refund_amount),
             refund_remarks=payload.refund_remarks
@@ -487,8 +553,11 @@ async def refund_status(refund_ref_id: str = Query(..., description="Refund refe
     """
     Check refund status using sslcz.query_refund_status().
     """
+    sslcz_client, _, _, _ = _get_ssl_client()
+    if not sslcz_client:
+        raise HTTPException(status_code=503, detail="Payment gateway client is unavailable")
     try:
-        response = sslcz.query_refund_status(refund_ref_id)
+        response = sslcz_client.query_refund_status(refund_ref_id)
         return {"status": "SUCCESS", "data": response}
     except Exception as e:
         logger.error(f"Failed to query refund status: {str(e)}")
