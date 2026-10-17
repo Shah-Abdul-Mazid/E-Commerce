@@ -27,6 +27,10 @@ import {
   Globe,
   Sun,
   Moon,
+  Mail,
+  Lock,
+  Headphones,
+  RotateCcw,
 } from 'lucide-react'
 
 import type { Product, Transaction, Subscription, User as UserType } from './types'
@@ -1056,6 +1060,7 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingCheckoutProduct, setPendingCheckoutProduct] = useState<Product | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
+  const [activeLegalModal, setActiveLegalModal] = useState<'privacy' | 'refund' | 'terms' | null>(null)
 
   // Auto-dismiss any active notification after 8 seconds (max 10 seconds) without needing a page refresh
   useEffect(() => {
@@ -1467,12 +1472,17 @@ export default function App() {
           <div className="flex items-center gap-4 text-emerald-100/90 text-[11px]">
             <span className="flex items-center gap-1.5 font-medium">
               <Phone className="w-3.5 h-3.5 text-emerald-300" />
-              <span>{t.topBar.helpline}</span>
+              <span>Helpline:</span>
+              <a href="tel:01531329222" className="hover:text-white transition underline underline-offset-2">01531329222</a>
+              <span>/</span>
+              <a href="tel:01560024587" className="hover:text-white transition underline underline-offset-2">01560024587</a>
             </span>
             <span className="hidden md:inline text-emerald-500">•</span>
             <span className="hidden md:flex items-center gap-1.5 text-emerald-200">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-              <span>{t.topBar.portal}</span>
+              <svg className="w-3.5 h-3.5 fill-emerald-300 flex-shrink-0" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+              </svg>
+              <a href="https://wa.me/8801531329222" target="_blank" rel="noopener noreferrer" className="hover:text-white transition underline underline-offset-2">WhatsApp: +8801531329222</a>
             </span>
           </div>
 
@@ -2553,32 +2563,366 @@ export default function App() {
         </div>
       )}
 
-      {/* 10. FOOTER */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0b0f17] py-12 mt-16 text-slate-600 dark:text-slate-400 text-xs transition-colors">
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 flex items-center justify-center shadow-md overflow-hidden flex-shrink-0">
-              <img src={ezopyLogo} alt="EZOPY MART TECH" className="w-full h-full object-contain" />
+      {/* 9.5 SECURE & TRUSTED SECTION (SoftMart IT Style) */}
+      <section className="mt-20 py-16 bg-[#07090e] border-t border-slate-800/80 text-white">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 space-y-12">
+          {/* Section Header */}
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center justify-center gap-2">
+              <span>Secure &amp;</span>
+              <span className="text-purple-400">Trusted</span>
+            </h2>
+            <div className="h-1 w-12 bg-gradient-to-r from-purple-500 to-amber-400 rounded-full mx-auto" />
+            <p className="text-xs text-slate-400 max-w-md mx-auto pt-1">
+              Your payments and personal data are always protected.
+            </p>
+          </div>
+
+          {/* Centered Gateway Card */}
+          <div className="max-w-2xl mx-auto p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-[#131726]/90 to-[#0b0e17] border border-purple-500/30 text-center space-y-3 shadow-2xl shadow-purple-950/20">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+              <Lock className="w-3 h-3" />
+              <span>100% SECURE PAYMENT VIA</span>
             </div>
-            <div>
-              <span className="text-slate-900 dark:text-white font-black text-base block uppercase">EZOPY MART TECH</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                {t.footer.dedication}
-              </span>
+
+            <div className="text-xl sm:text-3xl font-black text-white tracking-wide flex items-center justify-center gap-2">
+              <CreditCard className="w-6 h-6 text-amber-400" />
+              <span>SSLCommerz &amp; DBBL NexusPay</span>
+            </div>
+
+            <p className="text-xs text-slate-400 leading-relaxed max-w-lg mx-auto">
+              Easy Payment System — fast, secure transactions via bKash, Nagad, Rocket, DBBL Nexus &amp; Cards.
+            </p>
+          </div>
+
+          {/* 3 Pillars */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-4">
+            <div className="text-center space-y-2.5 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-purple-500/30 transition">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/5">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-extrabold text-white">100% Fraud Protection</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Secure processing keeps your money fully protected at every step of the transaction.
+              </p>
+            </div>
+
+            <div className="text-center space-y-2.5 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-purple-500/30 transition">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/5">
+                <RotateCcw className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-extrabold text-white">Service Guarantee</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Non-functional services trigger automatic refunds or replacements. No questions asked, no delays.
+              </p>
+            </div>
+
+            <div className="text-center space-y-2.5 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-purple-500/30 transition">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-400 mx-auto flex items-center justify-center shadow-lg shadow-purple-500/5">
+                <Headphones className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-extrabold text-white">Instant Support</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Real human support available whenever you have a question or face an issue.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. MULTI-COLUMN CONTACT & BRAND FOOTER (SoftMart IT Style) */}
+      <footer className="bg-[#05070c] border-t border-slate-800 py-16 text-slate-400 text-xs">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 space-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+            {/* Column 1: Brand & Dedication */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 p-1.5 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+                  <img src={ezopyLogo} alt="EZOPY MART TECH" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                  <span className="text-white font-black text-base block uppercase tracking-wide">EZOPY MART TECH</span>
+                  <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider block">Academic &amp; AI Cloud Hub</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                EZOPY MART TECH provides premium AI and educational tools at the most affordable prices in Bangladesh.
+              </p>
+              <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[11px] text-purple-300">
+                ❤️ <span className="font-semibold text-white">Dedicated to Jannat Farhana Popy</span> • Curated by Shah Abdul Mazid
+              </div>
+            </div>
+
+            {/* Column 2: Quick Links */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-widest text-white">Quick Links</h4>
+              <ul className="space-y-2.5 text-xs text-slate-400">
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveView('store')
+                      setActiveCategory('Education')
+                      window.scrollTo({ top: 500, behavior: 'smooth' })
+                    }}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    B.Sc. CSE Academic Courses
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveView('store')
+                      setActiveCategory('Packages')
+                      window.scrollTo({ top: 500, behavior: 'smooth' })
+                    }}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    AI Packages &amp; Bundles
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveView('store')
+                      setActiveCategory('Single Tools')
+                      window.scrollTo({ top: 500, behavior: 'smooth' })
+                    }}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    Single Tools
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveView('memo-generator')
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    NexusPay Bill Memo Generator
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveView('dashboard')
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    Student / User Dashboard
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: Legal & Support */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-widest text-white">Legal &amp; Support</h4>
+              <ul className="space-y-2.5 text-xs text-slate-400">
+                <li>
+                  <button
+                    onClick={() => setActiveLegalModal('privacy')}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveLegalModal('refund')}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    Refund Policy (Guaranteed)
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveLegalModal('terms')}
+                    className="hover:text-purple-400 transition cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>
+                </li>
+                <li>
+                  <a
+                    href="mailto:info@ezopymarttech.com?subject=Support%20Request%20-%20EZOPY%20MART%20TECH"
+                    className="hover:text-purple-400 transition inline-block"
+                  >
+                    Contact Support
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: Contact Us */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-white">Contact Us</h4>
+              <div className="space-y-2.5 text-xs text-slate-300">
+                <div className="flex items-center gap-2.5">
+                  <Phone className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <div className="flex flex-wrap gap-x-2">
+                    <a href="tel:01531329222" className="hover:text-white transition">01531329222</a>
+                    <span className="text-slate-600">•</span>
+                    <a href="tel:01560024587" className="hover:text-white transition">01560024587</a>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <svg className="w-4 h-4 fill-emerald-400 flex-shrink-0" viewBox="0 0 24 24">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                  </svg>
+                  <a
+                    href="https://wa.me/8801531329222"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-emerald-400 transition"
+                  >
+                    +8801531329222 (WhatsApp)
+                  </a>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <Mail className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                  <a href="mailto:info@ezopymarttech.com" className="hover:text-white transition">
+                    info@ezopymarttech.com
+                  </a>
+                </div>
+              </div>
+
+              {/* WE ACCEPT: Badges */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">WE ACCEPT:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[10px]">
+                    SSLCommerz
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/30 text-pink-300 font-bold text-[10px]">
+                    bKash
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/30 text-orange-300 font-bold text-[10px]">
+                    Nagad
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold text-[10px]">
+                    Rocket
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]">
+                    NexusPay
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300 font-bold text-[10px]">
+                    Cards
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-6 text-slate-500 dark:text-slate-400 font-semibold">
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors">{t.footer.address}</span>
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors">{t.footer.dbblAccount}</span>
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors">{t.footer.support}</span>
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+            <p>
+              © 2026 <span className="text-white font-bold">EZOPY MART TECH</span>. Developed by <span className="text-slate-300 font-semibold">Shah Abdul Mazid</span>. Dedicated to <span className="text-purple-300 font-semibold">Jannat Farhana Popy</span>. All rights reserved.
+            </p>
+            <p className="flex items-center gap-2">
+              <span>Dutch-Bangla Bank PLC A/C: 107.110.198425</span>
+              <span>•</span>
+              <span>Gulshan-2, Dhaka</span>
+            </p>
           </div>
-
-          <p className="text-[11px] text-slate-400 dark:text-slate-500">
-            {t.footer.copyright}
-          </p>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Quick Contact Button (SoftMart IT Style) */}
+      <a
+        href="https://wa.me/8801531329222?text=Hello%20EZOPY%20MART%20TECH%2C%20I%20need%20assistance"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group cursor-pointer"
+        title="Chat with us on WhatsApp (+8801531329222)"
+      >
+        <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
+          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+        </svg>
+        <span className="absolute right-16 bg-slate-900 text-white text-xs px-3 py-1.5 rounded-xl whitespace-nowrap shadow-xl opacity-0 group-hover:opacity-100 transition pointer-events-none border border-slate-700">
+          Chat on WhatsApp (+880 1531-329222)
+        </span>
+      </a>
+
+      {/* LEGAL & SUPPORT MODAL */}
+      {activeLegalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-lg bg-[#0d0f18] border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl text-left">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-purple-400" />
+                {activeLegalModal === 'privacy' && 'Privacy Policy'}
+                {activeLegalModal === 'refund' && 'Refund Policy (Service Guarantee)'}
+                {activeLegalModal === 'terms' && 'Terms of Service'}
+              </h3>
+              <button
+                onClick={() => setActiveLegalModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
+              {activeLegalModal === 'privacy' && (
+                <>
+                  <p>
+                    At <span className="text-white font-bold">EZOPY MART TECH</span>, we take the confidentiality and privacy of our students and customers seriously.
+                  </p>
+                  <p>
+                    • We only collect essential information (Name, Email, Mobile number) strictly to provision access tokens, deliver course materials, and send payment confirmations.
+                  </p>
+                  <p>
+                    • We never sell, rent, or share personal information with third parties. All financial processing is conducted through official secure channels (SSLCommerz, Dutch-Bangla Bank NexusPay, bKash, and Nagad).
+                  </p>
+                </>
+              )}
+
+              {activeLegalModal === 'refund' && (
+                <>
+                  <p className="text-emerald-400 font-bold">
+                    ✓ 100% Service Guarantee &amp; Automatic Refund Policy
+                  </p>
+                  <p>
+                    • In the event that any subscribed educational tool, course material, or license key is non-functional or encounters technical downtime that cannot be resolved within 24 hours, you are entitled to an immediate replacement or full 100% refund.
+                  </p>
+                  <p>
+                    • Contact our dedicated support via WhatsApp (<span className="text-white font-semibold">+8801531329222</span>) or email (<span className="text-white font-semibold">info@ezopymarttech.com</span>) with your Transaction ID for rapid resolution.
+                  </p>
+                </>
+              )}
+
+              {activeLegalModal === 'terms' && (
+                <>
+                  <p>
+                    • All B.Sc. CSE course subscriptions and academic materials are provided for individual learning and personal academic advancement.
+                  </p>
+                  <p>
+                    • Access credentials and software licenses must not be redistributed, resold, or abused.
+                  </p>
+                  <p>
+                    • Official payment references must correspond to valid Dutch-Bangla Bank or SSLCommerz transactions.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setActiveLegalModal(null)}
+                className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODALS */}
       {selectedProductForCheckout && (
