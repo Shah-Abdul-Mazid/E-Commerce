@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
-import { ShieldCheck, AlertCircle, ExternalLink, Zap } from 'lucide-react'
-import type { Product, PaymentMethod, MemoType, Transaction } from '../types'
+import React, { useState, useEffect } from 'react'
+import { ShieldCheck, AlertCircle, ExternalLink, Zap, CheckCircle2 } from 'lucide-react'
+import type { Product, PaymentMethod, MemoType, Transaction, User } from '../types'
 
 interface Props {
   product: Product
   token: string | null
+  user?: User | null
   onSuccess: (trx: Transaction) => void
   onClose: () => void
   onRequireLogin: () => void
@@ -15,6 +16,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || ''
 export const CheckoutModal: React.FC<Props> = ({
   product,
   token,
+  user,
   onSuccess,
   onClose,
   onRequireLogin,
@@ -28,10 +30,18 @@ export const CheckoutModal: React.FC<Props> = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Customer info for SSLCommerz session
-  const [customerName, setCustomerName] = useState('')
-  const [customerEmail, setCustomerEmail] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
+  // Customer info for SSLCommerz session - pre-fill from user
+  const [customerName, setCustomerName] = useState(user?.full_name || '')
+  const [customerEmail, setCustomerEmail] = useState(user?.email || '')
+  const [customerPhone, setCustomerPhone] = useState(user?.phone_number || '')
+
+  useEffect(() => {
+    if (user) {
+      if (user.full_name) setCustomerName(user.full_name)
+      if (user.email) setCustomerEmail(user.email)
+      if (user.phone_number) setCustomerPhone(user.phone_number)
+    }
+  }, [user])
 
   const paymentGuides = {
     SSLCOMMERZ: {
@@ -104,9 +114,9 @@ export const CheckoutModal: React.FC<Props> = ({
           product_id: product.id,
           product_category: 'AI Software & Educational Tools',
           customer: {
-            name: customerName,
-            email: customerEmail,
-            phone: customerPhone,
+            name: customerName.trim() || user?.full_name || 'EZOPY Customer',
+            email: customerEmail.trim() || user?.email || '',
+            phone: customerPhone.trim() || user?.phone_number || '01700000000',
             address: 'Gulshan-2, Dhaka',
             city: 'Dhaka',
             country: 'Bangladesh',
@@ -255,14 +265,26 @@ export const CheckoutModal: React.FC<Props> = ({
                   Redirects seamlessly to the SSLCommerz Sandbox checkout portal. Pay using test cards, bKash, Nagad, Rocket, or internet banking.
                 </p>
 
+                {/* Logged-in badge — shown only if user is authenticated */}
+                {user && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <span className="text-xs text-emerald-300 font-semibold">
+                      Logged in as <span className="text-white">{user.full_name}</span>{' '}
+                      <span className="text-emerald-400">({user.email})</span>
+                    </span>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
                   <div>
                     <label className="block text-[11px] text-slate-400 mb-1">Customer Name</label>
                     <input
                       type="text"
                       value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full bg-[#0d0b18] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
+                      onChange={(e) => !user && setCustomerName(e.target.value)}
+                      readOnly={!!user}
+                      className={`w-full bg-[#0d0b18] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white ${user ? 'opacity-70 cursor-not-allowed' : ''}`}
                     />
                   </div>
                   <div>
@@ -270,8 +292,9 @@ export const CheckoutModal: React.FC<Props> = ({
                     <input
                       type="email"
                       value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      className="w-full bg-[#0d0b18] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
+                      onChange={(e) => !user && setCustomerEmail(e.target.value)}
+                      readOnly={!!user}
+                      className={`w-full bg-[#0d0b18] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white ${user ? 'opacity-70 cursor-not-allowed' : ''}`}
                     />
                   </div>
                   <div>
@@ -279,8 +302,9 @@ export const CheckoutModal: React.FC<Props> = ({
                     <input
                       type="text"
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="w-full bg-[#0d0b18] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
+                      onChange={(e) => !user && setCustomerPhone(e.target.value)}
+                      readOnly={!!user}
+                      className={`w-full bg-[#0d0b18] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white ${user ? 'opacity-70 cursor-not-allowed' : ''}`}
                     />
                   </div>
                 </div>

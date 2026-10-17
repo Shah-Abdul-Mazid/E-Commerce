@@ -15,11 +15,12 @@ import type { User as UserType } from '../types'
 interface Props {
   onSuccess: (token: string, user: UserType) => void
   onClose: () => void
+  titlePrompt?: string
 }
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || ''
 
-export const AuthModal: React.FC<Props> = ({ onSuccess, onClose }) => {
+export const AuthModal: React.FC<Props> = ({ onSuccess, onClose, titlePrompt }) => {
   const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -104,6 +105,13 @@ export const AuthModal: React.FC<Props> = ({ onSuccess, onClose }) => {
             ✕
           </button>
         </div>
+
+        {titlePrompt && (
+          <div className="mb-4 p-3 rounded-2xl bg-purple-900/40 border border-purple-500/40 text-purple-200 text-xs flex items-center gap-2.5">
+            <UserPlus className="w-4 h-4 text-purple-400 flex-shrink-0" />
+            <span className="font-semibold leading-relaxed">{titlePrompt}</span>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">

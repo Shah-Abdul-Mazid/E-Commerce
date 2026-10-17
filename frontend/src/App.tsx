@@ -1054,6 +1054,7 @@ export default function App() {
   const [selectedProductForCheckout, setSelectedProductForCheckout] = useState<Product | null>(null)
   const [activeMemoData, setActiveMemoData] = useState<any | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [pendingCheckoutProduct, setPendingCheckoutProduct] = useState<Product | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
 
   // Standalone memo generator state
@@ -1218,6 +1219,11 @@ export default function App() {
     setNotification(`Welcome back, ${newUser.full_name}!`)
     setTimeout(() => setNotification(null), 4000)
     refreshUserData(newToken, newUser.role === 'ADMIN')
+    // If user was trying to buy something before logging in, open checkout now
+    if (pendingCheckoutProduct) {
+      setSelectedProductForCheckout(pendingCheckoutProduct)
+      setPendingCheckoutProduct(null)
+    }
   }
 
   const handleLogout = () => {
@@ -1267,22 +1273,34 @@ export default function App() {
   // Direct SSLCommerz Checkout from Cart
   const handleCartSSLCommerzCheckout = async () => {
     if (cart.length === 0) return
+
+    if (!user) {
+      setIsCartOpen(false)
+      setShowAuthModal(true)
+      return
+    }
+
     const primaryItem = cart[0].product
     const totalAmount = totalCartAmount
 
     try {
       setNotification('Connecting to SSLCommerz Sandbox...')
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/init-payment`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           amount: totalAmount,
           product_name: `${cart.length} Course(s) (${primaryItem.title} & more)`,
           product_category: 'B.Sc. CSE Courses & Academic Subscriptions',
           customer: {
-            name: user?.full_name || 'EZOPY MART TECH Customer',
-            email: user?.email || 'customer@ezopymart.tech',
-            phone: '01700000000',
+            name: user.full_name || 'EZOPY MART TECH Customer',
+            email: user.email || 'customer@ezopymart.tech',
+            phone: user.phone_number || '01700000000',
             address: 'Dhaka, Bangladesh',
             city: 'Dhaka',
             country: 'Bangladesh',
@@ -2211,7 +2229,14 @@ export default function App() {
 
                                 <button
                                   type="button"
-                                  onClick={() => setSelectedProductForCheckout(matchingProd)}
+                                  onClick={() => {
+                                    if (!user) {
+                                      setPendingCheckoutProduct(matchingProd)
+                                      setShowAuthModal(true)
+                                    } else {
+                                      setSelectedProductForCheckout(matchingProd)
+                                    }
+                                  }}
                                   className="px-6 py-2.5 rounded-full font-bold text-xs text-white bg-[#003d29] hover:bg-[#002f20] transition shadow-md shadow-[#003d29]/20 active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                 >
                                   <CreditCard className="w-3.5 h-3.5 text-amber-300" />
@@ -2366,7 +2391,14 @@ export default function App() {
                         </button>
 
                         <button
-                          onClick={() => setSelectedProductForCheckout(prod)}
+                          onClick={() => {
+                            if (!user) {
+                              setPendingCheckoutProduct(prod)
+                              setShowAuthModal(true)
+                            } else {
+                              setSelectedProductForCheckout(prod)
+                            }
+                          }}
                           className="py-2.5 px-3 rounded-full font-bold text-xs text-white bg-[#003d29] hover:bg-[#002f20] transition shadow-md shadow-[#003d29]/20 active:scale-95 flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <span>{t.cards.buyNow}</span>
@@ -2532,6 +2564,7 @@ export default function App() {
         <CheckoutModal
           product={selectedProductForCheckout}
           token={token}
+          user={user}
           onSuccess={handleCheckoutSuccess}
           onClose={() => setSelectedProductForCheckout(null)}
           onRequireLogin={() => {
@@ -2556,7 +2589,15 @@ export default function App() {
       {showAuthModal && (
         <AuthModal
           onSuccess={handleLoginSuccess}
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => {
+            setShowAuthModal(false)
+            setPendingCheckoutProduct(null)
+          }}
+          titlePrompt={
+            pendingCheckoutProduct
+              ? `Sign in to purchase "${pendingCheckoutProduct.title}"`
+              : undefined
+          }
         />
       )}
     </div>
