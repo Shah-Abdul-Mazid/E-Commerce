@@ -2564,64 +2564,71 @@ export default function App() {
       )}
 
       {/* 9.5 SECURE & TRUSTED SECTION (SoftMart IT Style) */}
-      <section className="mt-20 py-16 bg-[#07090e] border-t border-slate-800/80 text-white">
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 space-y-12">
-          {/* Section Header */}
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center justify-center gap-2">
+      <section className="mt-24 pt-16 pb-20 bg-gradient-to-b from-transparent via-[#0d0f1e]/90 to-[#070812] border-t border-purple-500/20 text-white">
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-8 space-y-12">
+          {/* Header */}
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
               <span>Secure &amp;</span>
-              <span className="text-purple-400">Trusted</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">Trusted</span>
             </h2>
-            <div className="h-1 w-12 bg-gradient-to-r from-purple-500 to-amber-400 rounded-full mx-auto" />
-            <p className="text-xs text-slate-400 max-w-md mx-auto pt-1">
+            <div className="h-0.5 w-16 bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 rounded-full mx-auto" />
+            <p className="text-sm text-slate-400 max-w-md mx-auto">
               Your payments and personal data are always protected.
             </p>
           </div>
 
-          {/* Centered Gateway Card */}
-          <div className="max-w-2xl mx-auto p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-[#131726]/90 to-[#0b0e17] border border-purple-500/30 text-center space-y-3 shadow-2xl shadow-purple-950/20">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest text-emerald-400">
-              <Lock className="w-3 h-3" />
+          {/* Sleek Payment Gateway Showcase Box */}
+          <div className="max-w-2xl mx-auto p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-[#1b1736]/90 via-[#131129]/95 to-[#0b0a1a] border border-purple-500/30 text-center space-y-3 shadow-xl shadow-purple-950/30 backdrop-blur-md">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold tracking-widest text-amber-400 uppercase">
+              <Lock className="w-3.5 h-3.5" />
               <span>100% SECURE PAYMENT VIA</span>
+            </span>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600/20 to-purple-600/20 border border-rose-500/40 text-white font-extrabold text-lg sm:text-xl">
+                <CreditCard className="w-5 h-5 text-amber-400" />
+                <span>SSLCommerz</span>
+              </div>
+              <span className="text-slate-500 font-bold">&amp;</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/40 text-white font-extrabold text-lg sm:text-xl">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <span>DBBL NexusPay</span>
+              </div>
             </div>
 
-            <div className="text-xl sm:text-3xl font-black text-white tracking-wide flex items-center justify-center gap-2">
-              <CreditCard className="w-6 h-6 text-amber-400" />
-              <span>SSLCommerz &amp; DBBL NexusPay</span>
-            </div>
-
-            <p className="text-xs text-slate-400 leading-relaxed max-w-lg mx-auto">
+            <p className="text-xs text-slate-400 leading-relaxed max-w-lg mx-auto pt-1">
               Easy Payment System — fast, secure transactions via bKash, Nagad, Rocket, DBBL Nexus &amp; Cards.
             </p>
           </div>
 
-          {/* 3 Pillars */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-4">
-            <div className="text-center space-y-2.5 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-purple-500/30 transition">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/5">
+          {/* 3 Pillars - Clean, Borderless & Elegant */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+            <div className="text-center space-y-2.5 px-4 group">
+              <div className="w-12 h-12 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 mx-auto flex items-center justify-center transition-transform group-hover:scale-110">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-extrabold text-white">100% Fraud Protection</h3>
+              <h3 className="text-sm font-bold text-white tracking-wide">100% Fraud Protection</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Secure processing keeps your money fully protected at every step of the transaction.
               </p>
             </div>
 
-            <div className="text-center space-y-2.5 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-purple-500/30 transition">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/5">
+            <div className="text-center space-y-2.5 px-4 group">
+              <div className="w-12 h-12 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 mx-auto flex items-center justify-center transition-transform group-hover:scale-110">
                 <RotateCcw className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-extrabold text-white">Service Guarantee</h3>
+              <h3 className="text-sm font-bold text-white tracking-wide">Service Guarantee</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Non-functional services trigger automatic refunds or replacements. No questions asked, no delays.
+                Non-functional services trigger automatic refunds. No questions asked, no delays.
               </p>
             </div>
 
-            <div className="text-center space-y-2.5 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-purple-500/30 transition">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-400 mx-auto flex items-center justify-center shadow-lg shadow-purple-500/5">
+            <div className="text-center space-y-2.5 px-4 group">
+              <div className="w-12 h-12 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-400 mx-auto flex items-center justify-center transition-transform group-hover:scale-110">
                 <Headphones className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-extrabold text-white">Instant Support</h3>
+              <h3 className="text-sm font-bold text-white tracking-wide">Instant Support</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Real human support available whenever you have a question or face an issue.
               </p>
@@ -2630,55 +2637,43 @@ export default function App() {
         </div>
       </section>
 
-      {/* 10. MULTI-COLUMN CONTACT & BRAND FOOTER (SoftMart IT Style) */}
-      <footer className="bg-[#05070c] border-t border-slate-800 py-16 text-slate-400 text-xs">
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-            {/* Column 1: Brand & Dedication */}
+      {/* 10. MULTI-COLUMN CONTACT & BRAND FOOTER */}
+      <footer className="bg-[#070812] border-t border-slate-800/80 pt-16 pb-12 text-slate-400 text-xs">
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-8 space-y-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            {/* Column 1: Brand */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 p-1.5 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 p-1 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
                   <img src={ezopyLogo} alt="EZOPY MART TECH" className="w-full h-full object-contain" />
                 </div>
                 <div>
-                  <span className="text-white font-black text-base block uppercase tracking-wide">EZOPY MART TECH</span>
-                  <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider block">Academic &amp; AI Cloud Hub</span>
+                  <span className="text-white font-black text-sm block uppercase tracking-wide">EZOPY MART TECH</span>
+                  <span className="text-[10px] text-purple-400 font-semibold block">Academic &amp; AI Cloud Hub</span>
                 </div>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                EZOPY MART TECH provides premium AI and educational tools at the most affordable prices in Bangladesh.
+                Soft Mart IT provides premium AI and learning tools at the most affordable prices in Bangladesh.
               </p>
-              <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[11px] text-purple-300">
+              <div className="inline-block px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-[11px] text-purple-300">
                 ❤️ <span className="font-semibold text-white">Dedicated to Jannat Farhana Popy</span> • Curated by Shah Abdul Mazid
               </div>
             </div>
 
             {/* Column 2: Quick Links */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-white">Quick Links</h4>
-              <ul className="space-y-2.5 text-xs text-slate-400">
-                <li>
-                  <button
-                    onClick={() => {
-                      setActiveView('store')
-                      setActiveCategory('Education')
-                      window.scrollTo({ top: 500, behavior: 'smooth' })
-                    }}
-                    className="hover:text-purple-400 transition cursor-pointer"
-                  >
-                    B.Sc. CSE Academic Courses
-                  </button>
-                </li>
+            <div className="space-y-3.5">
+              <h4 className="text-[11px] font-black uppercase tracking-wider text-white">QUICK LINKS</h4>
+              <ul className="space-y-2 text-xs text-slate-400">
                 <li>
                   <button
                     onClick={() => {
                       setActiveView('store')
                       setActiveCategory('Packages')
-                      window.scrollTo({ top: 500, behavior: 'smooth' })
+                      window.scrollTo({ top: 450, behavior: 'smooth' })
                     }}
-                    className="hover:text-purple-400 transition cursor-pointer"
+                    className="hover:text-white transition cursor-pointer text-left"
                   >
-                    AI Packages &amp; Bundles
+                    Packages
                   </button>
                 </li>
                 <li>
@@ -2686,11 +2681,34 @@ export default function App() {
                     onClick={() => {
                       setActiveView('store')
                       setActiveCategory('Single Tools')
-                      window.scrollTo({ top: 500, behavior: 'smooth' })
+                      window.scrollTo({ top: 450, behavior: 'smooth' })
                     }}
-                    className="hover:text-purple-400 transition cursor-pointer"
+                    className="hover:text-white transition cursor-pointer text-left"
                   >
                     Single Tools
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveView('store')
+                      setActiveCategory('Education')
+                      window.scrollTo({ top: 450, behavior: 'smooth' })
+                    }}
+                    className="hover:text-white transition cursor-pointer text-left"
+                  >
+                    B.Sc. CSE Courses
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      if (!user) setShowAuthModal(true)
+                      else setActiveView('dashboard')
+                    }}
+                    className="hover:text-white transition cursor-pointer text-left"
+                  >
+                    Login Panel
                   </button>
                 </li>
                 <li>
@@ -2699,33 +2717,22 @@ export default function App() {
                       setActiveView('memo-generator')
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
-                    className="hover:text-purple-400 transition cursor-pointer"
+                    className="hover:text-white transition cursor-pointer text-left"
                   >
-                    NexusPay Bill Memo Generator
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => {
-                      setActiveView('dashboard')
-                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                    }}
-                    className="hover:text-purple-400 transition cursor-pointer"
-                  >
-                    Student / User Dashboard
+                    NexusPay Bill Memo
                   </button>
                 </li>
               </ul>
             </div>
 
             {/* Column 3: Legal & Support */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-white">Legal &amp; Support</h4>
-              <ul className="space-y-2.5 text-xs text-slate-400">
+            <div className="space-y-3.5">
+              <h4 className="text-[11px] font-black uppercase tracking-wider text-white">LEGAL &amp; SUPPORT</h4>
+              <ul className="space-y-2 text-xs text-slate-400">
                 <li>
                   <button
                     onClick={() => setActiveLegalModal('privacy')}
-                    className="hover:text-purple-400 transition cursor-pointer"
+                    className="hover:text-white transition cursor-pointer text-left"
                   >
                     Privacy Policy
                   </button>
@@ -2733,23 +2740,23 @@ export default function App() {
                 <li>
                   <button
                     onClick={() => setActiveLegalModal('refund')}
-                    className="hover:text-purple-400 transition cursor-pointer"
+                    className="hover:text-white transition cursor-pointer text-left"
                   >
-                    Refund Policy (Guaranteed)
+                    Refund Policy
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => setActiveLegalModal('terms')}
-                    className="hover:text-purple-400 transition cursor-pointer"
+                    className="hover:text-white transition cursor-pointer text-left"
                   >
                     Terms of Service
                   </button>
                 </li>
                 <li>
                   <a
-                    href="mailto:info@ezopymarttech.com?subject=Support%20Request%20-%20EZOPY%20MART%20TECH"
-                    className="hover:text-purple-400 transition inline-block"
+                    href="mailto:info@ezopymarttech.com"
+                    className="hover:text-white transition inline-block"
                   >
                     Contact Support
                   </a>
@@ -2758,15 +2765,14 @@ export default function App() {
             </div>
 
             {/* Column 4: Contact Us */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-white">Contact Us</h4>
+            <div className="space-y-3.5">
+              <h4 className="text-[11px] font-black uppercase tracking-wider text-white">CONTACT US</h4>
               <div className="space-y-2.5 text-xs text-slate-300">
-                <div className="flex items-center gap-2.5">
-                  <Phone className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <div className="flex flex-wrap gap-x-2">
-                    <a href="tel:01531329222" className="hover:text-white transition">01531329222</a>
-                    <span className="text-slate-600">•</span>
-                    <a href="tel:01560024587" className="hover:text-white transition">01560024587</a>
+                <div className="flex items-start gap-2.5">
+                  <Phone className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <a href="tel:01531329222" className="block hover:text-white transition">+8801531329222</a>
+                    <a href="tel:01560024587" className="block hover:text-white transition">+8801560024587</a>
                   </div>
                 </div>
 
@@ -2793,25 +2799,25 @@ export default function App() {
               </div>
 
               {/* WE ACCEPT: Badges */}
-              <div className="space-y-2 pt-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">WE ACCEPT:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[10px]">
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">WE ACCEPT:</span>
+                <div className="flex flex-wrap gap-1">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold text-[10px]">
                     SSLCommerz
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/30 text-pink-300 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/20 text-pink-300 font-bold text-[10px]">
                     bKash
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/30 text-orange-300 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-300 font-bold text-[10px]">
                     Nagad
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-300 font-bold text-[10px]">
                     Rocket
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-bold text-[10px]">
                     NexusPay
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px]">
                     Cards
                   </span>
                 </div>
@@ -2819,12 +2825,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+          {/* Bottom Bar - with extra right padding so WhatsApp button never overlaps */}
+          <div className="pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 pr-0 sm:pr-24">
             <p>
-              © 2026 <span className="text-white font-bold">EZOPY MART TECH</span>. Developed by <span className="text-slate-300 font-semibold">Shah Abdul Mazid</span>. Dedicated to <span className="text-purple-300 font-semibold">Jannat Farhana Popy</span>. All rights reserved.
+              © 2026 <span className="text-slate-300 font-semibold">EZOPY MART TECH</span>. Developed by <span className="text-purple-300 font-medium">Shah Abdul Mazid</span>. All rights reserved.
             </p>
-            <p className="flex items-center gap-2">
+            <p className="flex items-center gap-2 text-slate-500">
               <span>Dutch-Bangla Bank PLC A/C: 107.110.198425</span>
               <span>•</span>
               <span>Gulshan-2, Dhaka</span>
