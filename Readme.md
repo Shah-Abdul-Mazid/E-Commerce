@@ -28,6 +28,109 @@ A modern, full-stack e-commerce marketplace and academic learning platform. Buil
 
 ---
 
+## 🎯 Technical Competency & Job Requirements Proof
+
+This repository serves as a verified, production-grade technical portfolio demonstrating end-to-end competency in **Software Development, API Integration, ERP Module Automation, and Payment Systems**.
+
+### 📋 Requirement-to-Implementation Proof Matrix
+
+| Job Circular Requirement | Project Implementation & Proof Details | Visual Proof |
+|---|---|---|
+| **Education: Bachelor of Science (B.Sc.) in CSE**<br>*(Renowned University Standard)* | Built a complete 4-Year B.Sc. in Computer Science & Engineering Academic Hub (140 Credits, 21+ core accredited courses, semester breakdowns, verified lecture slides, lab codes, and solved questions). | [Curriculum Hub](#1-official-bsc-cse-academic-curriculum-hub--ai-suite-portal) (`Image 1.png`) |
+| **Payment Gateway & API Integration**<br>*(SSLCommerz, Banking, SMS/Email)* | Full integration with **SSLCommerz Hosted Gateway** (Cards, Mobile Banking, Net Banking), **3D Secure OTP verification flow**, and **DBBL NexusPay / Rocket / bKash / Nagad** payment channels with IPN webhook callbacks. | [Payment Integration](#3-secure-checkout--multi-gateway-selection) (`Image 3 *.png`) |
+| **ERP Modules & Automation**<br>*(Finance, Inventory, CRM, Customer Mgmt)* | Built manual-to-automation workflows: instant order processing, dynamic price calculation, automated invoice generation, and real-time subscription license token generation (`EZ-VIP-14D5D15471`). | [ERP Fulfillment](#7-automated-erp-customer-dashboard--license-issuance) (`Image 4 Subscription Complete.png`) |
+| **Diagnostic Centre & Enterprise Relevance**<br>*(Billing, Invoicing, Records)* | Implemented Dutch-Bangla Bank PLC institutional billing memos with Biller Code (`8810`), Student/Patient ID tracking (`2022-1-60-019`), and printable PDF slips for diagnostic/lab accounting audit trails. | [Institutional Memo](#6-automated-verification--dbbl-nexuspay-receipt) (`Image 3 Payment Complete.png`) |
+| **Scalable REST APIs & Architecture**<br>*(FastAPI / PHP & Laravel compatible)* | Architected modular RESTful services with JWT token authentication, Bcrypt password encryption, Docker containerization, and production deployment on Vercel & Render. | [System Architecture](#-architecture--technology-stack) |
+| **Frontend UI/UX & Responsive Design**<br>*(Modern, Intuitive, Multilingual)* | Developed high-performance Single Page Application (SPA) with React 19, Tailwind CSS, 8-language i18n localization, Dark/Light modes, and instant cart/checkout resumption. | [Catalog & Storefront](#2-dynamic-catalog--subscription-management) (`Image 2.png`) |
+
+---
+
+## 📸 Live Application Visual Proofs & User Journey
+
+The following screenshots demonstrate the live, deployed system in action on production ([ezopy-mart.vercel.app](https://ezopy-mart.vercel.app)):
+
+### 1. Official B.Sc. CSE Academic Curriculum Hub & AI Suite Portal
+> **Proof of**: B.Sc. CSE Academic Foundation, Departmental Curriculum Architecture (140 Credits total across 4 years), and Responsive UI.
+
+![B.Sc. CSE Academic Hub & Landing Page](./Image%201.png)
+
+*Key Highlights:*
+- B.Sc. CSE 4-Year Academic Curriculum navigation (1st, 2nd, 3rd, and 4th Year tracks).
+- Real-time language switcher (8 languages) and theme auto-switching.
+- Direct quick-links to tuition bill memo generation and course profiles accordion.
+
+---
+
+### 2. Dynamic Catalog & Subscription Management
+> **Proof of**: Inventory/Catalog Management, Tiered Pricing (BDT ৳), Discount Badges, and Fast Filtering.
+
+![Dynamic Catalog & Subscriptions](./Image%202.png)
+
+*Key Highlights:*
+- 58+ verified products and curriculum packages with instant access indicators.
+- Badges for *50% OFF*, *BEST SELLER*, *ENTERPRISE*, and *POPULAR* tiers.
+- Integrated "Add to Cart" and "Buy Now" triggers with pre-checkout auth validation.
+
+---
+
+### 3. Secure Checkout & Multi-Gateway Selection
+> **Proof of**: Pre-Checkout Auth Verification, Autofilled Profile Security, and Multi-Gateway Support.
+
+![Secure Checkout Modal](./Image%203%20Payment.png)
+
+*Key Highlights:*
+- Selectable payment gateways: **SSLCommerz (Instant Sandbox)**, **DBBL NexusPay (Instant Slip)**, **bKash (Auto Verify)**, **Nagad (Fast Track)**, and **Rocket (DBBL Channel)**.
+- Authenticated user profile auto-lock (Shah Abdul Mazid, email, phone) preventing typo discrepancies.
+- One-click launch into SSLCommerz payment portal.
+
+---
+
+### 4. SSLCommerz Third-Party Gateway Integration
+> **Proof of**: Third-Party Payment Gateway Redirection, Hosted Checkout API, and Omnichannel Banking.
+
+![SSLCommerz Gateway Redirection](./Image%203%20Payment%20Gateway.png)
+
+*Key Highlights:*
+- Seamless API redirect to `sandbox.sslcommerz.com/EasyCheckOut/...` with encrypted session key.
+- Multi-channel checkout handling: Debit/Credit Cards (VISA, MasterCard, AMEX), Mobile Banking, and Internet Banking.
+
+---
+
+### 5. 3D Secure Bank OTP Verification Lifecycle
+> **Proof of**: Bank Verification Security, OTP Transaction Lifecycle, and Gateway Webhook Readiness.
+
+![OTP Bank Verification](./Image%203%20Payment%20Varification%20Gateway.png)
+
+*Key Highlights:*
+- Direct interaction with bank gateway (`indexhtmlOTP.php`) transmitting 3D Secure / Verified by Visa / MasterCard SecureCode verification.
+- Transaction amount (৳ 599.00) and automated invoice reconciliation.
+
+---
+
+### 6. Automated Verification & DBBL NexusPay Receipt
+> **Proof of**: Instant IPN Callback Fulfillment, Institutional Billing Memos, and Diagnostic/Enterprise Billing Records.
+
+![DBBL NexusPay Transaction Receipt](./Image%203%20Payment%20Complete.png)
+
+*Key Highlights:*
+- Real-time success toast notification: `SSLCommerz Payment Successful! Txn: TXN-7EE8D089312E`.
+- Instant generation of Dutch-Bangla Bank PLC Institutional Bill Payment Memo with Biller Code `8810` and User ID `2022-1-60-019`.
+- Printable & PDF-exportable receipt for diagnostic centre / institutional financial audits.
+
+---
+
+### 7. Automated ERP Customer Dashboard & License Issuance
+> **Proof of**: Manual-to-Automation ERP Workflows, Customer Access Control, and License Key Provisioning.
+
+![Customer Dashboard & License Activation](./Image%204%20Subscription%20Complete.png)
+
+*Key Highlights:*
+- Dynamic user profile dashboard displaying active tool entitlements.
+- Automated software license issuance (`EZ-VIP-14D5D15471`) with real-time countdown (59 days left) and expiry tracking (`12/17/2026`).
+- Unified view for Active Tools and Payment History & Memos without page reload.
+
+---
+
 ## 🏗️ Architecture & Technology Stack
 
 | Layer | Technologies |
